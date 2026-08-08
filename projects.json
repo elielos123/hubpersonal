@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-08-08T01:44:37.000Z",
+  "lastUpdated": "2026-08-08T01:59:22.000Z",
   "user": {
     "name": "Eliel Tavares",
     "role": "Lead Architect & Systems Engineer",
@@ -55,7 +55,13 @@
       "value": "$14,250",
       "trend": "+12.4%",
       "label": "Monthly Cashflow",
-      "isPositive": true
+      "isPositive": true,
+      "transactions": [
+        { "id": "tx-1", "type": "entrada", "value": 18500, "date": "2026-08-08", "description": "Enterprise Retainer Client A", "tag": "#Salary" },
+        { "id": "tx-2", "type": "saida", "value": 2450, "date": "2026-08-08", "description": "AWS & Vercel Edge Infrastructure", "tag": "#Server" },
+        { "id": "tx-3", "type": "saida", "value": 1200, "date": "2026-08-07", "description": "GitHub Copilot & Figma Software", "tag": "#SaaS" },
+        { "id": "tx-4", "type": "saida", "value": 600, "date": "2026-08-06", "description": "Google Ads Campaign", "tag": "#Marketing" }
+      ]
     },
     "learningMetric": {
       "value": 68,
