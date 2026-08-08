@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-08-08T01:31:10.000Z",
+  "lastUpdated": "2026-08-08T01:44:37.000Z",
   "user": {
     "name": "Eliel Tavares",
     "role": "Lead Architect & Systems Engineer",
@@ -31,7 +31,25 @@
     "healthMetric": {
       "value": 92,
       "label": "Health Index",
-      "history": [65, 70, 72, 78, 80, 82, 85, 84, 88, 90, 89, 92]
+      "history": [65, 70, 72, 78, 80, 82, 85, 84, 88, 90, 89, 92],
+      "sleep": {
+        "hours": 7.5,
+        "target": 7.5,
+        "completed": true
+      },
+      "exercise": {
+        "type": "Cardio",
+        "time": "07:00 AM",
+        "durationMinutes": 45,
+        "completed": true
+      },
+      "caloricBalance": {
+        "intakeKcal": 2100,
+        "expenditureKcal": 2450,
+        "netKcal": -350,
+        "isPositive": true,
+        "completed": true
+      }
     },
     "financesMetric": {
       "value": "$14,250",
