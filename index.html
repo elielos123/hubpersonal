@@ -22,7 +22,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
           <polyline points="2 17 12 22 22 17"></polyline>
-          <polyline points="2 12 12 17 22 12"></polyline>
+          <polyline points="2 12 17 22 12"></polyline>
         </svg>
       </div>
       <span class="brand-title">SYSTEM // COMMAND CENTER</span>
@@ -83,26 +83,29 @@
           <div class="bio-grid">
             <div class="bio-item">
               <span class="bio-label">IMC ATUAL</span>
-              <span class="bio-value-mono highlight-cyan" id="user-current-bmi">24.8</span>
+              <span class="bio-value-mono highlight-red" id="user-current-bmi">24.8</span>
             </div>
             <div class="bio-item">
-              <span class="bio-label">IMC SAUDÁVEL</span>
-              <span class="bio-value-mono text-muted" id="user-healthy-bmi">18.5 - 24.9</span>
+              <span class="bio-label">META DESEJÁVEL</span>
+              <span class="bio-value-mono text-green" id="user-healthy-bmi">21.7 (18.5-24.9)</span>
             </div>
           </div>
 
-          <!-- Indicador Visual do IMC (Linha Verde Desejável + Linha Azul/Vermelha Atual) -->
+          <!-- Indicador Visual de IMC com Linha Vermelha de Discrepância (% Acima) -->
           <div class="imc-dual-line-container" style="margin-top: 6px;">
             <div class="imc-line-legend">
-              <span class="legend-item"><span class="legend-dot green"></span> Meta (Desejável)</span>
-              <span class="legend-item"><span class="legend-dot" id="imc-current-legend-dot"></span> Nível Atual</span>
+              <span class="legend-item"><span class="legend-dot green"></span> Meta Desejável (21.7)</span>
+              <span class="legend-item"><span class="legend-dot red" id="imc-current-legend-dot"></span> Atual (<span id="imc-pct-badge">+14.3% Acima</span>)</span>
             </div>
             <svg class="imc-lines-svg" viewBox="0 0 200 24" preserveAspectRatio="none" id="card1-imc-svg">
-              <!-- Linha Verde Desejável -->
+              <!-- Linha Verde Meta Desejável -->
               <line x1="0" y1="8" x2="200" y2="8" stroke="#00E676" stroke-width="2.5" stroke-dasharray="3,3" />
-              <!-- Linha Atual (Azul se saudável, Vermelho se fora) -->
-              <line x1="0" y1="16" x2="200" y2="16" stroke="#88C0D0" stroke-width="3.5" stroke-linecap="round" id="card1-imc-current-line" />
+              <!-- Linha Vermelha Nível Atual -->
+              <line x1="0" y1="16" x2="200" y2="16" stroke="#FF5252" stroke-width="3.5" stroke-linecap="round" id="card1-imc-current-line" />
             </svg>
+            <div class="discrepancy-text-sm" id="card1-discrepancy-desc">
+              ⚠️ Discrepância: 14.3% acima do peso ideal desejável.
+            </div>
           </div>
 
           <div class="bio-row commitment-row">
@@ -164,7 +167,7 @@
         <div class="card kpi-card clickable-card" id="health-metric-card" title="Clique para gerenciar Hábitos Saudáveis, Exercícios e Calorias">
           <div class="kpi-header">
             <span class="kpi-title">Health Metric</span>
-            <span class="badge badge-imc-blue" id="card-imc-badge">IMC 24.8 CORRETO</span>
+            <span class="badge badge-imc-red" id="card-imc-badge">IMC 24.8 (+14.3% ACIMA)</span>
           </div>
           <div class="sparkline-wrapper">
             <svg class="sparkline-svg" viewBox="0 0 120 30" preserveAspectRatio="none" id="health-sparkline">
@@ -214,7 +217,7 @@
           </li>
           <li class="nav-item">
             <a href="#projects" class="nav-link">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 17 22 12"></polyline></svg>
               <span>Active Projects</span>
               <span class="nav-badge" id="nav-project-count">4</span>
             </a>
@@ -247,15 +250,12 @@
 
     <!-- COLUMN 2: Active Projects Hub -->
     <section class="col-projects" id="col-projects">
-      
-      <!-- Section Header -->
       <div class="projects-header">
         <div class="title-area">
           <h1 class="section-title">Active Projects Hub</h1>
           <span class="project-counter-badge" id="project-counter">(4 Active)</span>
         </div>
 
-        <!-- Context Switcher Filters -->
         <div class="context-switcher" id="context-switcher">
           <button class="switcher-btn active" data-filter="ALL">ALL</button>
           <button class="switcher-btn" data-filter="ON TRACK">ON TRACK</button>
@@ -265,12 +265,8 @@
         </div>
       </div>
 
-      <!-- HUD Project Cards Stack View -->
-      <div class="projects-stack" id="projects-stack">
-        <!-- Project Cards will be dynamically injected via JS -->
-      </div>
+      <div class="projects-stack" id="projects-stack"></div>
 
-      <!-- Pipeline Status Footer -->
       <footer class="pipeline-footer card">
         <div class="pipeline-header">
           <span class="pipeline-title">PIPELINE STAGE DISTRIBUTION</span>
@@ -302,8 +298,6 @@
 
     <!-- COLUMN 3: Action Center & Stream -->
     <aside class="col-action" id="col-action">
-      
-      <!-- Quick Ingestion Terminal -->
       <div class="card terminal-card">
         <div class="terminal-header">
           <div class="terminal-dots">
@@ -329,7 +323,6 @@
         </div>
       </div>
 
-      <!-- Delivery Stream (Timeline) -->
       <div class="card stream-card">
         <div class="stream-header">
           <div class="stream-title-group">
@@ -339,9 +332,7 @@
           <span class="stream-counter" id="stream-count">5 items</span>
         </div>
 
-        <div class="delivery-timeline" id="delivery-timeline">
-          <!-- Timeline entries rendered via JS -->
-        </div>
+        <div class="delivery-timeline" id="delivery-timeline"></div>
       </div>
     </aside>
 
@@ -399,9 +390,7 @@
 
       <div class="drawer-section">
         <h3 class="drawer-section-title">MILESTONES CHECKLIST</h3>
-        <ul class="milestone-list" id="drawer-milestones-list">
-          <!-- Milestones rendered via JS -->
-        </ul>
+        <ul class="milestone-list" id="drawer-milestones-list"></ul>
       </div>
 
       <div class="drawer-actions">
@@ -574,24 +563,24 @@
         <!-- 1. IMC Health Status Banner & Visual Lines -->
         <div class="imc-banner-box" id="imc-banner-box">
           <div class="imc-banner-header">
-            <span class="imc-banner-title">VISUALIZAÇÃO DE IMC</span>
-            <span class="badge badge-imc-blue" id="modal-imc-status-badge">IMC 24.8 — NÍVEL CORRETO</span>
+            <span class="imc-banner-title">VISUALIZAÇÃO DE IMC & DISCREPÂNCIA</span>
+            <span class="badge badge-imc-red" id="modal-imc-status-badge">IMC 24.8 — 14.3% ACIMA</span>
           </div>
 
           <!-- Dual Line Visual Indicator -->
           <div class="imc-dual-line-container">
             <div class="imc-line-legend">
-              <span class="legend-item"><span class="legend-dot green"></span> Linha Meta (Verde Desejável)</span>
-              <span class="legend-item"><span class="legend-dot" id="modal-imc-legend-dot"></span> Linha Atual (Azul Nível Correto / Vermelho Acima/Abaixo)</span>
+              <span class="legend-item"><span class="legend-dot green"></span> Linha Meta (Verde Desejável 21.7)</span>
+              <span class="legend-item"><span class="legend-dot red" id="modal-imc-legend-dot"></span> Linha Atual (<span id="modal-imc-pct-badge">+14.3% Acima</span>)</span>
             </div>
             <svg class="imc-lines-svg" viewBox="0 0 400 30" preserveAspectRatio="none" id="modal-imc-svg">
               <line x1="0" y1="10" x2="400" y2="10" stroke="#00E676" stroke-width="3" stroke-dasharray="4,4" />
-              <line x1="0" y1="22" x2="400" y2="22" stroke="#88C0D0" stroke-width="4" stroke-linecap="round" id="modal-imc-current-line" />
+              <line x1="0" y1="22" x2="400" y2="22" stroke="#FF5252" stroke-width="4" stroke-linecap="round" id="modal-imc-current-line" />
             </svg>
           </div>
 
           <div class="imc-banner-desc" id="modal-imc-desc">
-            Seu IMC atual está no nível correto (linha azul). A linha verde representa o critério saudável desejável (18.5 - 24.9).
+            Discrepância detectada: Seu IMC atual (24.8) está 14.3% acima da meta ideal desejável (21.7). A linha vermelha destaca essa variação acima do necessário.
           </div>
         </div>
 
