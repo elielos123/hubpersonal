@@ -98,9 +98,7 @@
               <span class="legend-item"><span class="legend-dot red" id="imc-current-legend-dot"></span> Atual (<span id="imc-pct-badge">+14.3% Acima</span>)</span>
             </div>
             <svg class="imc-lines-svg" viewBox="0 0 200 24" preserveAspectRatio="none" id="card1-imc-svg">
-              <!-- Linha Verde Meta Desejável -->
               <line x1="0" y1="8" x2="200" y2="8" stroke="#00E676" stroke-width="2.5" stroke-dasharray="3,3" />
-              <!-- Linha Vermelha Nível Atual -->
               <line x1="0" y1="16" x2="200" y2="16" stroke="#FF5252" stroke-width="3.5" stroke-linecap="round" id="card1-imc-current-line" />
             </svg>
             <div class="discrepancy-text-sm" id="card1-discrepancy-desc">
@@ -180,8 +178,8 @@
           </div>
         </div>
 
-        <!-- 3. Finances Metric -->
-        <div class="card kpi-card">
+        <!-- 3. Finances Metric Card (Clickable to open Transações, Balanço e Gastos por Tags) -->
+        <div class="card kpi-card clickable-card" id="finances-metric-card" title="Clique para lançar Entradas/Saídas e ver Balanço Financeiro">
           <div class="kpi-header">
             <span class="kpi-title">Finances Metric</span>
             <span class="trend-badge trend-up" id="finances-trend">+12.4% ↑</span>
@@ -189,6 +187,9 @@
           <div class="kpi-body">
             <div class="kpi-val-hero" id="finances-val">$14,250</div>
             <div class="kpi-subtext">Monthly Recurring Cashflow</div>
+          </div>
+          <div class="kpi-subtext-footer" style="margin-top: 4px; color: var(--accent-cyan);">
+            + Clique para Lançar Entradas / Saídas
           </div>
         </div>
 
@@ -400,7 +401,7 @@
     </div>
   </aside>
 
-  <!-- Centered Modal Overlay Standard (Profile & Biometrics Edit Modal) -->
+  <!-- Profile Edit Modal (Card 1) -->
   <div class="modal-backdrop" id="profile-modal-backdrop">
     <div class="modal-container" role="dialog" aria-labelledby="modal-title-profile" aria-modal="true">
       <div class="modal-header">
@@ -459,12 +460,8 @@
         <div class="modal-section-box">
           <span class="modal-section-title">GERENCIAMENTO DE BACKUP & PERSISTÊNCIA</span>
           <div class="modal-backup-buttons">
-            <button type="button" class="btn btn-secondary" id="modal-btn-download">
-              📥 Baixar Backup JSON
-            </button>
-            <button type="button" class="btn btn-secondary" id="modal-btn-restore">
-              📤 Restaurar Backup
-            </button>
+            <button type="button" class="btn btn-secondary" id="modal-btn-download">📥 Baixar Backup JSON</button>
+            <button type="button" class="btn btn-secondary" id="modal-btn-restore">📤 Restaurar Backup</button>
           </div>
         </div>
 
@@ -476,7 +473,7 @@
     </div>
   </div>
 
-  <!-- Centered Modal Overlay Standard (Column 1, Card 2: Focus Score & Task Timer Modal) -->
+  <!-- Focus Score Modal (Card 2) -->
   <div class="modal-backdrop" id="focus-modal-backdrop">
     <div class="modal-container large-modal" role="dialog" aria-labelledby="modal-title-focus" aria-modal="true">
       <div class="modal-header">
@@ -547,7 +544,7 @@
     </div>
   </div>
 
-  <!-- Centered Modal Overlay Standard (Column 1, Card 3: Health Metric & Hábitos Saudáveis Modal) -->
+  <!-- Health Metric Modal (Card 3) -->
   <div class="modal-backdrop" id="health-modal-backdrop">
     <div class="modal-container large-modal" role="dialog" aria-labelledby="modal-title-health" aria-modal="true">
       <div class="modal-header">
@@ -559,15 +556,12 @@
       </div>
 
       <div class="modal-body">
-        
-        <!-- 1. IMC Health Status Banner & Visual Lines -->
         <div class="imc-banner-box" id="imc-banner-box">
           <div class="imc-banner-header">
             <span class="imc-banner-title">VISUALIZAÇÃO DE IMC & DISCREPÂNCIA</span>
             <span class="badge badge-imc-red" id="modal-imc-status-badge">IMC 24.8 — 14.3% ACIMA</span>
           </div>
 
-          <!-- Dual Line Visual Indicator -->
           <div class="imc-dual-line-container">
             <div class="imc-line-legend">
               <span class="legend-item"><span class="legend-dot green"></span> Linha Meta (Verde Desejável 21.7)</span>
@@ -580,15 +574,13 @@
           </div>
 
           <div class="imc-banner-desc" id="modal-imc-desc">
-            Discrepância detectada: Seu IMC atual (24.8) está 14.3% acima da meta ideal desejável (21.7). A linha vermelha destaca essa variação acima do necessário.
+            Discrepância detectada: Seu IMC atual (24.8) está 14.3% acima da meta ideal desejável (21.7).
           </div>
         </div>
 
-        <!-- 2. Hábitos Saudáveis Interactive Log Form -->
         <form id="health-habits-form" class="card habits-form-card">
           <div class="form-section-title">REGISTRO DIÁRIO DE HÁBITOS SAUDÁVEIS</div>
 
-          <!-- A) Sono -->
           <div class="habit-group-box">
             <div class="habit-group-header">
               <span class="habit-title">A) SONO (META: 7 A 8 HORAS)</span>
@@ -606,7 +598,6 @@
             </div>
           </div>
 
-          <!-- B) Exercícios (Cardio vs Musculação) -->
           <div class="habit-group-box">
             <div class="habit-group-header">
               <span class="habit-title">B) EXERCÍCIOS (CARDIO / MUSCULAÇÃO)</span>
@@ -631,7 +622,6 @@
             </div>
           </div>
 
-          <!-- C) Equilíbrio Calórico (Ingestão x Gasto) -->
           <div class="habit-group-box">
             <div class="habit-group-header">
               <span class="habit-title">C) EQUILÍBRIO CALÓRICO (INGESTÃO X GASTO)</span>
@@ -659,7 +649,6 @@
           </div>
         </form>
 
-        <!-- 3. Gráficos dos Hábitos Section (SVG) -->
         <div class="charts-section">
           <div class="chart-box">
             <div class="chart-header">
@@ -673,6 +662,121 @@
               <span class="chart-title">GRÁFICO 2: VARIÂNCIA E DIFERENÇA DAS METAS (SONO & BALANÇO CALÓRICO)</span>
             </div>
             <div class="chart-svg-container" id="chart-habits-variance-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Centered Modal Overlay Standard (Column 1, Card 4: Finances Metric & Balanço Financeiro Modal) -->
+  <div class="modal-backdrop" id="finances-modal-backdrop">
+    <div class="modal-container large-modal" role="dialog" aria-labelledby="modal-title-finances" aria-modal="true">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-subtitle">COLUNA 1 // CARD 4</span>
+          <h2 class="modal-title" id="modal-title-finances">Finances Metric & Balanço Financeiro</h2>
+        </div>
+        <button class="modal-close-btn" id="finances-modal-close" aria-label="Fechar janela">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- 1. Formulário de Inserção de Transação (Entradas / Saídas) -->
+        <form id="finances-transaction-form" class="card transaction-form-card">
+          <div class="form-section-title">LANÇAMENTO DE TRANSAÇÕES (ENTRADAS X SAÍDAS)</div>
+
+          <div class="form-group">
+            <label class="form-label">Tipo de Lançamento</label>
+            <div class="tx-type-selector">
+              <button type="button" class="tx-type-btn active btn-tx-entrada" id="btn-tx-entrada" data-type="entrada">🟢 ENTRADA (RECEITA)</button>
+              <button type="button" class="tx-type-btn btn-tx-saida" id="btn-tx-saida" data-type="saida">🔴 SAÍDA (DESPESA)</button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="tx-value">Valor ($ / R$)</label>
+              <input type="number" step="0.01" id="tx-value" class="form-input" placeholder="ex: 1500.00" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tx-date">Data da Transação</label>
+              <input type="date" id="tx-date" class="form-input" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="tx-description">Descrição</label>
+              <input type="text" id="tx-description" class="form-input" placeholder="ex: Serviço de Consultoria / Hospedagem Server" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tx-tag">Tag de Categoria</label>
+              <input type="text" id="tx-tag" class="form-input" placeholder="ex: #Salary, #Server, #SaaS, #Marketing" required />
+            </div>
+          </div>
+
+          <div class="modal-footer" style="padding-top: 0; margin-top: 4px;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">+ Registrar Transação</button>
+          </div>
+        </form>
+
+        <!-- 2. Balanço Financeiro em 3 Visualizações (Diário, Semanal, Mensal) -->
+        <div class="balance-views-section">
+          <div class="form-section-title">BALANÇO FINANCEIRO (3 MÉTROIS DE VISUALIZAÇÃO)</div>
+
+          <div class="balance-grid">
+            <div class="balance-card">
+              <span class="balance-label">BALANÇO DIÁRIO (HOJE)</span>
+              <span class="balance-val" id="balance-daily-val">+$16,050.00</span>
+              <span class="balance-subtext" id="balance-daily-sub">Entradas: $18,500 | Saídas: $2,450</span>
+            </div>
+            <div class="balance-card">
+              <span class="balance-label">BALANÇO SEMANAL (7 DIAS)</span>
+              <span class="balance-val" id="balance-weekly-val">+$14,250.00</span>
+              <span class="balance-subtext" id="balance-weekly-sub">Entradas: $18,500 | Saídas: $4,250</span>
+            </div>
+            <div class="balance-card">
+              <span class="balance-label">BALANÇO MENSAL (MÊS)</span>
+              <span class="balance-val text-green" id="balance-monthly-val">+$14,250.00</span>
+              <span class="balance-subtext" id="balance-monthly-sub">Cashflow Recorrente +12.4% ↑</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Ordem de Gastos por Tags & % do Orçamento (Entradas) -->
+        <div class="tag-ranking-section card">
+          <div class="chart-header">
+            <span class="chart-title">ORDEM DE GASTOS POR TAGS & % DO ORÇAMENTO (ENTRADAS)</span>
+            <span class="chart-subtitle-mono" id="tag-total-income-label">Total Entradas: $18,500</span>
+          </div>
+
+          <div class="tag-ranking-list" id="tag-ranking-list">
+            <!-- Dynamically rendered via JS -->
+          </div>
+        </div>
+
+        <!-- 4. Histórico de Transações Recentes -->
+        <div class="recent-tx-section card">
+          <div class="chart-header">
+            <span class="chart-title">HISTÓRICO RECENTE DE TRANSAÇÕES</span>
+            <span class="chart-subtitle-mono" id="tx-count-label">4 lançamentos</span>
+          </div>
+
+          <div class="tx-history-table-wrapper">
+            <table class="tx-table">
+              <thead>
+                <tr>
+                  <th>TIPO</th>
+                  <th>DATA</th>
+                  <th>DESCRIÇÃO</th>
+                  <th>TAG</th>
+                  <th>VALOR</th>
+                </tr>
+              </thead>
+              <tbody id="tx-history-body">
+                <!-- Dynamically rendered via JS -->
+              </tbody>
+            </table>
           </div>
         </div>
 
