@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Command Center | Technical Dashboard</title>
+  <meta name="description" content="Technical dark-mode personal command center dashboard featuring active project hub, health KPIs, pipeline metrics, and quick ingestion terminal.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <!-- CSS Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Top Navigation / Status Bar -->
+  <header class="top-bar">
+    <div class="brand">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
+      <span class="brand-title">SYSTEM // COMMAND CENTER</span>
+      <span class="version-tag">v3.4.0-edge</span>
+    </div>
+
+    <div class="system-status-indicator">
+      <span class="status-pulse"></span>
+      <span class="status-text">SYSTEMS OPERATIONAL</span>
+      <span class="timestamp-display" id="live-clock">00:00:00 UTC</span>
+    </div>
+
+    <div class="top-actions">
+      <button class="terminal-trigger-btn" id="terminal-trigger-btn" title="Open Quick Ingestion (Ctrl+K)">
+        <span class="cmd-icon">⌘K</span> Quick Action
+      </button>
+    </div>
+  </header>
+
+  <!-- Main 3-Column Dashboard Grid -->
+  <main class="dashboard-grid">
+    
+    <!-- COLUMN 1: Vital Status & Navigation -->
+    <aside class="col-vital" id="col-vital">
+      
+      <!-- Profile Header -->
+      <div class="card profile-card">
+        <div class="profile-avatar" id="user-avatar">ET</div>
+        <div class="profile-info">
+          <h2 class="user-name" id="user-name">Eliel Tavares</h2>
+          <div class="user-status">
+            <span class="dot-online"></span>
+            <span class="user-role" id="user-role">Systems Architect</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Health Indicators (KPIs) -->
+      <div class="kpi-group">
+        <div class="kpi-group-title">VITAL METRICS</div>
+
+        <!-- 1. Focus Score -->
+        <div class="card kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Focus Score</span>
+            <span class="kpi-badge badge-on-track">OPTIMAL</span>
+          </div>
+          <div class="kpi-body focus-body">
+            <div class="circular-progress-container">
+              <svg class="progress-ring" width="60" height="60" viewBox="0 0 60 60">
+                <circle class="progress-ring-bg" cx="30" cy="30" r="24" />
+                <circle class="progress-ring-fill" id="focus-ring-fill" cx="30" cy="30" r="24" stroke-dasharray="150.79" stroke-dashoffset="22.6" />
+              </svg>
+              <span class="progress-ring-text" id="focus-score-val">85%</span>
+            </div>
+            <div class="kpi-details">
+              <div class="kpi-subtext">Deep Work Ratio</div>
+              <div class="kpi-mono-val">6.8 / 8.0 hrs</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Health Metric -->
+        <div class="card kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Health Metric</span>
+            <span class="kpi-value-main" id="health-val">92%</span>
+          </div>
+          <div class="sparkline-wrapper">
+            <svg class="sparkline-svg" viewBox="0 0 120 30" preserveAspectRatio="none" id="health-sparkline">
+              <polyline fill="none" stroke="#00E676" stroke-width="2" points="0,20 10,18 20,16 30,12 40,10 50,8 60,6 70,7 80,4 90,3 100,5 110,2 120,2" />
+            </svg>
+          </div>
+          <div class="kpi-subtext-footer">30-day biometrics sparkline trajectory</div>
+        </div>
+
+        <!-- 3. Finances Metric -->
+        <div class="card kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Finances Metric</span>
+            <span class="trend-badge trend-up" id="finances-trend">+12.4% ↑</span>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-val-hero" id="finances-val">$14,250</div>
+            <div class="kpi-subtext">Monthly Recurring Cashflow</div>
+          </div>
+        </div>
+
+        <!-- 4. Learning Metric -->
+        <div class="card kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Learning Metric</span>
+            <span class="kpi-mono-val" id="learning-val">68%</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="learning-bar-fill" style="width: 68%;"></div>
+          </div>
+          <div class="kpi-subtext-footer" id="learning-details">34 / 50 Hours Target Completed</div>
+        </div>
+      </div>
+
+      <!-- Macro Navigation Menu -->
+      <nav class="macro-nav">
+        <div class="nav-title">MACRO NAVIGATION</div>
+        <ul class="nav-list">
+          <li class="nav-item active">
+            <a href="#dashboard" class="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#projects" class="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+              <span>Active Projects</span>
+              <span class="nav-badge" id="nav-project-count">4</span>
+            </a>
+            <ul class="sub-nav-list">
+              <li><a href="#construction" class="sub-nav-link">• Construction (4)</a></li>
+              <li><a href="#validation" class="sub-nav-link">• Validation (1)</a></li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a href="#yearly-goals" class="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+              <span>Yearly Goals</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#timeline" class="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>Timeline</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#weekly-review" class="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              <span>Weekly Review</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- COLUMN 2: Active Projects Hub -->
+    <section class="col-projects" id="col-projects">
+      
+      <!-- Section Header -->
+      <div class="projects-header">
+        <div class="title-area">
+          <h1 class="section-title">Active Projects Hub</h1>
+          <span class="project-counter-badge" id="project-counter">(4 Active)</span>
+        </div>
+
+        <!-- Context Switcher Filters -->
+        <div class="context-switcher" id="context-switcher">
+          <button class="switcher-btn active" data-filter="ALL">ALL</button>
+          <button class="switcher-btn" data-filter="ON TRACK">ON TRACK</button>
+          <button class="switcher-btn" data-filter="DELAYED">DELAYED</button>
+          <button class="switcher-btn" data-filter="Construction">CONSTRUCTION</button>
+          <button class="switcher-btn" data-filter="Validation">VALIDATION</button>
+        </div>
+      </div>
+
+      <!-- HUD Project Cards Stack View -->
+      <div class="projects-stack" id="projects-stack">
+        <!-- Project Cards will be dynamically injected via JS -->
+      </div>
+
+      <!-- Pipeline Status Footer -->
+      <footer class="pipeline-footer card">
+        <div class="pipeline-header">
+          <span class="pipeline-title">PIPELINE STAGE DISTRIBUTION</span>
+          <span class="pipeline-total" id="pipeline-total">15 total tracked</span>
+        </div>
+        <div class="pipeline-flow">
+          <div class="pipeline-stage" data-stage="Ideation">
+            <span class="stage-name">Ideation</span>
+            <span class="stage-count" id="count-ideation">2</span>
+          </div>
+          <span class="stage-arrow">→</span>
+          <div class="pipeline-stage active-stage" data-stage="Construction">
+            <span class="stage-name">Construction</span>
+            <span class="stage-count" id="count-construction">4</span>
+          </div>
+          <span class="stage-arrow">→</span>
+          <div class="pipeline-stage" data-stage="Validation">
+            <span class="stage-name">Validation</span>
+            <span class="stage-count" id="count-validation">1</span>
+          </div>
+          <span class="stage-arrow">→</span>
+          <div class="pipeline-stage" data-stage="Completed">
+            <span class="stage-name">Completed</span>
+            <span class="stage-count" id="count-completed">8</span>
+          </div>
+        </div>
+      </footer>
+    </section>
+
+    <!-- COLUMN 3: Action Center & Stream -->
+    <aside class="col-action" id="col-action">
+      
+      <!-- Quick Ingestion Terminal -->
+      <div class="card terminal-card">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <span class="terminal-title">QUICK INGESTION TERMINAL</span>
+          <kbd class="kbd-shortcut">Cmd + K</kbd>
+        </div>
+        <div class="terminal-input-wrapper">
+          <span class="prompt-symbol">&gt;</span>
+          <input type="text" id="quick-input" class="terminal-input" placeholder="Capture task or idea... (use #project @date)" autocomplete="off" />
+          <button class="terminal-submit-btn" id="terminal-submit">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+        <div class="terminal-hints">
+          <span class="hint-tag">#QuantumFlow</span>
+          <span class="hint-tag">#AegisAI</span>
+          <span class="hint-tag">@Today</span>
+          <span class="hint-tag">@Tomorrow</span>
+        </div>
+      </div>
+
+      <!-- Delivery Stream (Timeline) -->
+      <div class="card stream-card">
+        <div class="stream-header">
+          <div class="stream-title-group">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            <span class="stream-title">DELIVERY STREAM</span>
+          </div>
+          <span class="stream-counter" id="stream-count">5 items</span>
+        </div>
+
+        <div class="delivery-timeline" id="delivery-timeline">
+          <!-- Timeline entries rendered via JS -->
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Sliding Side Drawer Modal (Project Details) -->
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="project-drawer" id="project-drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <div class="drawer-title-group">
+        <span class="drawer-subtitle" id="drawer-stage-badge">STAGE: CONSTRUCTION</span>
+        <h2 class="drawer-title" id="drawer-project-title">Project Title</h2>
+      </div>
+      <button class="drawer-close-btn" id="drawer-close" aria-label="Close panel">&times;</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Status & Completion Header -->
+      <div class="drawer-section drawer-hero-meta">
+        <div class="drawer-meta-item">
+          <span class="meta-label">STATUS</span>
+          <span class="badge" id="drawer-status-badge">ON TRACK</span>
+        </div>
+        <div class="drawer-meta-item">
+          <span class="meta-label">COMPLETION</span>
+          <span class="meta-value-mono" id="drawer-completion-val">78%</span>
+        </div>
+        <div class="drawer-meta-item">
+          <span class="meta-label">STAGE</span>
+          <span class="meta-value-text" id="drawer-stage-text">Construction</span>
+        </div>
+      </div>
+
+      <!-- Impact Thesis -->
+      <div class="drawer-section">
+        <h3 class="drawer-section-title">IMPACT THESIS</h3>
+        <p class="impact-statement" id="drawer-impact-thesis">
+          Automate cross-cloud distributed workflow execution with sub-millisecond latency.
+        </p>
+      </div>
+
+      <!-- Progress Meter -->
+      <div class="drawer-section">
+        <div class="drawer-section-header">
+          <h3 class="drawer-section-title">PROGRESS METER</h3>
+          <span class="kpi-mono-val" id="drawer-progress-percent">78%</span>
+        </div>
+        <div class="progress-bar-container large">
+          <div class="progress-bar-fill" id="drawer-progress-fill" style="width: 78%;"></div>
+        </div>
+      </div>
+
+      <!-- Next Critical Milestone -->
+      <div class="drawer-section milestone-highlight">
+        <div class="highlight-label">NEXT CRITICAL MILESTONE</div>
+        <div class="highlight-title" id="drawer-next-milestone-title">gRPC Streaming Pipeline Integration</div>
+        <div class="highlight-date" id="drawer-next-milestone-date">⚡ Target: Aug 08, 2026</div>
+      </div>
+
+      <!-- Milestone Checklist -->
+      <div class="drawer-section">
+        <h3 class="drawer-section-title">MILESTONES CHECKLIST</h3>
+        <ul class="milestone-list" id="drawer-milestones-list">
+          <!-- Milestones rendered via JS -->
+        </ul>
+      </div>
+
+      <!-- Quick Action Buttons inside drawer -->
+      <div class="drawer-actions">
+        <button class="btn btn-primary" id="drawer-toggle-status">Toggle Status (On Track / Delayed)</button>
+        <button class="btn btn-secondary" id="drawer-close-secondary">Close Drawer</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- JavaScript App Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
