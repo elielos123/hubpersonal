@@ -1,8 +1,9 @@
 /* ==========================================================================
    PERSONAL DASHBOARD COMMAND CENTER - JAVASCRIPT ENGINE
    Features: 3-Layer Persistence, Timestamp Guard, Task Timer (Cronômetro/Regressivo/Pomodoro),
-   Focus Score 4-Criteria Engine, Health Metric & Hábitos Saudáveis Engine (Sono, Exercícios Cardio/Musculação, Calorias),
-   IMC Status Indicator (Verde/Vermelho), and Comparative SVG Charts.
+   Focus Score 4-Criteria Engine, Health Metric & Hábitos Saudáveis Engine,
+   Visualização de IMC com Linha Verde (Desejável) e Linha Atual (Azul Nível Correto / Vermelho Acima ou Abaixo),
+   and Comparative SVG Charts.
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Default Global Application State
   let appState = {
-    lastUpdated: "2026-08-08T01:44:37.000Z",
+    lastUpdated: "2026-08-08T01:49:09.000Z",
     user: {
       name: "Eliel Tavares",
       role: "Lead Architect & Systems Engineer",
@@ -68,8 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
       learningMetric: { value: 68, label: "Quarterly Target", details: "34 / 50 Hours Completed" }
     },
     timerState: {
-      mode: 'pomodoro', // 'cronometro', 'regressivo', 'pomodoro'
-      seconds: 1500,     // 25 mins
+      mode: 'pomodoro',
+      seconds: 1500,
       initialSeconds: 1500,
       isRunning: false
     },
@@ -176,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     HEALTH METRICS & HÁBITOS SAUDÁVEIS ENGINE
+     HEALTH METRICS & HÁBITOS SAUDÁVEIS ENGINE WITH DUAL-LINE IMC VISUALIZER
      -------------------------------------------------------------------------- */
   function calculateHealthMetrics() {
     const bmi = parseFloat(appState.user.currentBmi) || 24.8;
@@ -191,7 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const cal = appState.kpis.healthMetric.caloricBalance || { intakeKcal: 2100, expenditureKcal: 2450, netKcal: -350, isPositive: true };
     const netKcal = cal.intakeKcal - cal.expenditureKcal;
 
-    // Caloric Rule: Positive if Intake < Expenditure when BMI > 24.9 (overweight)
     let isCaloriePositive = false;
     if (bmi > 24.9) {
       isCaloriePositive = netKcal < 0;
@@ -492,12 +492,10 @@ document.addEventListener('DOMContentLoaded', () => {
       <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
         <line x1="0" y1="60" x2="400" y2="60" stroke="#232C36" stroke-dasharray="3,3" />
 
-        <!-- Bar 1: Concluídos -->
         <rect x="80" y="${100 - (completed * 25)}" width="90" height="${completed * 25}" rx="4" fill="#00E676" />
         <text x="125" y="${88 - (completed * 25)}" fill="#00E676" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${completed} Hábitos (${Math.round((completed/3)*100)}%)</text>
         <text x="125" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Realizados Hoje</text>
 
-        <!-- Bar 2: Pendentes -->
         <rect x="230" y="${100 - (pending * 25)}" width="90" height="${pending * 25}" rx="4" fill="#FF9100" />
         <text x="275" y="${88 - (pending * 25)}" fill="#FF9100" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${pending} Pendentes</text>
         <text x="275" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Não Realizados</text>
@@ -516,12 +514,10 @@ document.addEventListener('DOMContentLoaded', () => {
       <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
         <line x1="0" y1="60" x2="400" y2="60" stroke="#5E81AC" stroke-width="1.5" />
 
-        <!-- Bar 1: Variação de Sono (Horas vs 7.5h Meta) -->
         <rect x="70" y="${sleepDiffVal >= 0 ? 60 - Math.min(45, Math.abs(sleepDiffVal) * 20) : 60}" width="80" height="${Math.max(10, Math.min(45, Math.abs(sleepDiffVal) * 20))}" rx="4" fill="${hMetrics.isSleepHealthy ? '#00E676' : '#FF9100'}" />
         <text x="110" y="${sleepDiffVal >= 0 ? 50 - Math.min(45, Math.abs(sleepDiffVal) * 20) : 80 + Math.min(45, Math.abs(sleepDiffVal) * 20)}" fill="${hMetrics.isSleepHealthy ? '#00E676' : '#FF9100'}" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${hMetrics.sleepDiff}</text>
         <text x="110" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Sono vs Meta</text>
 
-        <!-- Bar 2: Balanço Calórico (Líquido kcal) -->
         <rect x="250" y="${netKcal <= 0 ? 60 - Math.min(45, Math.abs(netKcal) / 10) : 60}" width="80" height="${Math.max(10, Math.min(45, Math.abs(netKcal) / 10))}" rx="4" fill="${hMetrics.isCaloriePositive ? '#00E676' : '#FF5252'}" />
         <text x="290" y="${netKcal <= 0 ? 50 - Math.min(45, Math.abs(netKcal) / 10) : 80 + Math.min(45, Math.abs(netKcal) / 10)}" fill="${hMetrics.isCaloriePositive ? '#00E676' : '#FF5252'}" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${netKcal} kcal</text>
         <text x="290" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Balanço Calórico</text>
@@ -636,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     PROFILE & KPIS RENDER
+     PROFILE & KPIS RENDER (WITH DUAL-LINE IMC VISUALIZER)
      -------------------------------------------------------------------------- */
   function renderUserProfile() {
     const avatarEl = document.getElementById('user-avatar');
@@ -664,6 +660,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentBmiEl) currentBmiEl.textContent = u.currentBmi || '24.8';
     if (healthyBmiEl) healthyBmiEl.textContent = u.healthyBmi || '18.5 - 24.9';
     if (commitmentEl) commitmentEl.textContent = u.commitmentStatus || 'ALTO (94%)';
+
+    // Dual-Line IMC Indicator rendering for Card 1
+    renderImcDualLineIndicators(parseFloat(u.currentBmi) || 24.8);
+  }
+
+  function renderImcDualLineIndicators(bmi) {
+    const isHealthy = bmi >= 18.5 && bmi <= 24.9;
+    const currentColor = isHealthy ? '#88C0D0' : '#FF5252'; // Blue if correct, Red if above/below
+
+    const card1Line = document.getElementById('card1-imc-current-line');
+    const card1Dot = document.getElementById('imc-current-legend-dot');
+    if (card1Line) card1Line.setAttribute('stroke', currentColor);
+    if (card1Dot) card1Dot.style.background = currentColor;
+
+    const modalLine = document.getElementById('modal-imc-current-line');
+    const modalDot = document.getElementById('modal-imc-legend-dot');
+    if (modalLine) modalLine.setAttribute('stroke', currentColor);
+    if (modalDot) modalDot.style.background = currentColor;
   }
 
   function renderKPIs() {
@@ -692,11 +706,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (healthValEl) healthValEl.textContent = `${hMetrics.completedHabits === 3 ? 95 : 82}%`;
     if (cardImcBadge) {
       if (hMetrics.isHealthyBmi) {
-        cardImcBadge.className = 'badge badge-imc-green';
-        cardImcBadge.textContent = `IMC ${hMetrics.bmi} SAUDÁVEL`;
+        cardImcBadge.className = 'badge badge-imc-blue';
+        cardImcBadge.textContent = `IMC ${hMetrics.bmi} CORRETO (AZUL)`;
       } else {
         cardImcBadge.className = 'badge badge-imc-red';
-        cardImcBadge.textContent = `IMC ${hMetrics.bmi} ATENÇÃO`;
+        cardImcBadge.textContent = `IMC ${hMetrics.bmi} ALERTA (VERMELHO)`;
       }
     }
     if (cardHabitsCounter) {
@@ -741,23 +755,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (badgeEl) {
       if (hMetrics.isHealthyBmi) {
-        badgeEl.className = 'badge badge-imc-green';
-        badgeEl.textContent = `IMC ${hMetrics.bmi} — SAUDÁVEL`;
+        badgeEl.className = 'badge badge-imc-blue';
+        badgeEl.textContent = `IMC ${hMetrics.bmi} — NÍVEL CORRETO (AZUL)`;
       } else {
         badgeEl.className = 'badge badge-imc-red';
-        badgeEl.textContent = `IMC ${hMetrics.bmi} — FORA DA FAIXA`;
+        badgeEl.textContent = `IMC ${hMetrics.bmi} — FORA DA FAIXA (VERMELHO)`;
       }
     }
 
     if (descEl) {
       if (hMetrics.isHealthyBmi) {
-        descEl.textContent = `Seu IMC atual (${hMetrics.bmi}) está dentro do critério de referência saudável (18.5 - 24.9).`;
+        descEl.textContent = `Seu IMC atual (${hMetrics.bmi}) está no nível correto (linha azul). A linha verde pontilhada é a meta desejável (18.5 - 24.9).`;
       } else {
-        descEl.textContent = `Atenção: Seu IMC atual (${hMetrics.bmi}) está fora do critério saudável (18.5 - 24.9). Mantenha hábitos direcionados para ajuste.`;
+        descEl.textContent = `Atenção: Seu IMC atual (${hMetrics.bmi}) está fora do nível saudável (linha vermelha). Ajuste a alimentação e exercícios para alcançar a linha verde desejável.`;
       }
     }
 
-    // Populate form inputs
+    renderImcDualLineIndicators(hMetrics.bmi);
+
     const sleepInput = document.getElementById('health-sleep-hours');
     const sleepDiffInput = document.getElementById('health-sleep-diff');
     const sleepPill = document.getElementById('sleep-status-pill');
