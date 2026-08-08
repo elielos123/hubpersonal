@@ -28,8 +28,8 @@
   --accent-green-bg: rgba(0, 230, 118, 0.12);
   --accent-orange: #FF9100;    /* Delayed */
   --accent-orange-bg: rgba(255, 145, 0, 0.12);
-  --accent-red: #FF5252;       /* Critical / Incorreto / Alerta */
-  --accent-red-bg: rgba(255, 82, 82, 0.12);
+  --accent-red: #FF5252;       /* Critical / Incorreto / Alerta Discrepância */
+  --accent-red-bg: rgba(255, 82, 82, 0.15);
   --accent-cyan: #88C0D0;     /* Nível Correto (Azul) */
   --accent-blue: #5E81AC;
 
@@ -367,6 +367,9 @@ button, input {
 }
 
 .highlight-cyan { color: var(--accent-cyan); }
+.highlight-red { color: var(--accent-red); }
+.text-green { color: var(--accent-green); }
+
 .commitment-row {
   margin-top: 4px;
   padding-top: 6px;
@@ -423,6 +426,13 @@ button, input {
 .imc-lines-svg {
   width: 100%;
   height: 24px;
+}
+
+.discrepancy-text-sm {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--accent-red);
+  margin-top: 2px;
 }
 
 /* Backup & Sync Action Bar */
