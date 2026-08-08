@@ -9,7 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
       name: "Eliel Tavares",
       role: "Lead Architect & Systems Engineer",
       status: "Online",
-      avatar: "ET"
+      avatar: "ET",
+      birthDate: "1994-08-15",
+      weight: "78.5",
+      height: "1.78",
+      currentBmi: 24.8,
+      healthyBmi: "18.5 - 24.9",
+      commitmentStatus: "ALTO (94%)"
     },
     kpis: {
       focusScore: { value: 85, label: "Focus Score", target: "85%" },
@@ -95,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(response => response.ok ? response.json() : null)
     .then(data => {
       if (data) {
-        appState.user = data.user || appState.user;
+        appState.user = Object.assign({}, appState.user, data.user || {});
         appState.kpis = data.kpis || appState.kpis;
         appState.pipeline = data.pipeline || appState.pipeline;
         appState.projects = data.projects || appState.projects;
@@ -118,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     LIVE CLOCK
+     LIVE CLOCK & UTILS
      -------------------------------------------------------------------------- */
   function setupLiveClock() {
     const clockEl = document.getElementById('live-clock');
@@ -135,6 +141,27 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateClock, 1000);
   }
 
+  function calculateAge(birthDateStr) {
+    if (!birthDateStr) return '31';
+    const birth = new Date(birthDateStr);
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age > 0 ? age : 31;
+  }
+
+  function formatDatePt(dateStr) {
+    if (!dateStr) return '15/08/1994';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateStr;
+  }
+
   /* --------------------------------------------------------------------------
      PROFILE & KPIS RENDER
      -------------------------------------------------------------------------- */
@@ -142,37 +169,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const avatarEl = document.getElementById('user-avatar');
     const nameEl = document.getElementById('user-name');
     const roleEl = document.getElementById('user-role');
+    const birthAgeEl = document.getElementById('user-birth-age');
+    const weightEl = document.getElementById('user-weight');
+    const heightEl = document.getElementById('user-height');
+    const currentBmiEl = document.getElementById('user-current-bmi');
+    const healthyBmiEl = document.getElementById('user-healthy-bmi');
+    const commitmentEl = document.getElementById('user-commitment');
 
-    if (avatarEl) avatarEl.textContent = appState.user.avatar || 'ET';
-    if (nameEl) nameEl.textContent = appState.user.name || 'Eliel Tavares';
-    if (roleEl) roleEl.textContent = appState.user.role || 'Systems Architect';
+    const u = appState.user;
+
+    if (avatarEl) avatarEl.textContent = u.avatar || 'ET';
+    if (nameEl) nameEl.textContent = u.name || 'Eliel Tavares';
+    if (roleEl) roleEl.textContent = u.role || 'Systems Architect';
+
+    const age = calculateAge(u.birthDate);
+    const formattedBirth = formatDatePt(u.birthDate);
+    if (birthAgeEl) birthAgeEl.textContent = `${formattedBirth} (${age} anos)`;
+
+    if (weightEl) weightEl.textContent = `${u.weight || '78.5'} kg`;
+    if (heightEl) heightEl.textContent = `${u.height || '1.78'} m`;
+    if (currentBmiEl) currentBmiEl.textContent = u.currentBmi || '24.8';
+    if (healthyBmiEl) healthyBmiEl.textContent = u.healthyBmi || '18.5 - 24.9';
+    if (commitmentEl) commitmentEl.textContent = u.commitmentStatus || 'ALTO (94%)';
   }
 
   function renderKPIs() {
-    // 1. Focus Score Progress Ring
     const focusValEl = document.getElementById('focus-score-val');
     const focusFillEl = document.getElementById('focus-ring-fill');
     if (focusValEl && focusFillEl) {
       const focusVal = appState.kpis.focusScore.value || 85;
       focusValEl.textContent = `${focusVal}%`;
-      const circumference = 2 * Math.PI * 24; // r=24 -> ~150.79
+      const circumference = 2 * Math.PI * 24;
       const offset = circumference - (focusVal / 100) * circumference;
       focusFillEl.style.strokeDashoffset = offset;
     }
 
-    // 2. Health Sparkline
     const healthValEl = document.getElementById('health-val');
     if (healthValEl) {
       healthValEl.textContent = `${appState.kpis.healthMetric.value || 92}%`;
     }
 
-    // 3. Finances Metric
     const finValEl = document.getElementById('finances-val');
     const finTrendEl = document.getElementById('finances-trend');
     if (finValEl) finValEl.textContent = appState.kpis.financesMetric.value || '$14,250';
     if (finTrendEl) finTrendEl.textContent = `${appState.kpis.financesMetric.trend} ↑`;
 
-    // 4. Learning Progress
     const learnValEl = document.getElementById('learning-val');
     const learnFillEl = document.getElementById('learning-bar-fill');
     const learnDetailsEl = document.getElementById('learning-details');
@@ -190,7 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const navCountEl = document.getElementById('nav-project-count');
     if (!container) return;
 
-    // Filter projects based on active filter
     let filteredProjects = appState.projects;
     if (appState.activeFilter !== 'ALL') {
       filteredProjects = appState.projects.filter(p => 
@@ -217,10 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'project-card';
       card.dataset.id = proj.id;
 
-      // Status Badge class
       const badgeClass = proj.status === 'ON TRACK' ? 'badge-on-track' : 'badge-delayed';
-
-      // Build Segmented Bar HTML
       const totalSegments = 10;
       const filledSegments = Math.round((proj.completionPercentage / 100) * totalSegments);
       let segmentColorClass = proj.status === 'ON TRACK' ? 'filled-green' : 'filled-orange';
@@ -286,7 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (counterEl) counterEl.textContent = `${appState.timeline.length} items`;
 
-    // Group timeline items by group ('Today', 'Tomorrow')
     const groups = { 'Today': [], 'Tomorrow': [] };
     appState.timeline.forEach(item => {
       const g = item.group || 'Today';
@@ -339,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     SLIDING SIDE DRAWER MODAL
+     SLIDING SIDE DRAWER MODAL (PROJECT DETAILS)
      -------------------------------------------------------------------------- */
   function openProjectDrawer(projectId) {
     const project = appState.projects.find(p => p.id === projectId);
@@ -350,7 +386,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const drawer = document.getElementById('project-drawer');
     const backdrop = document.getElementById('drawer-backdrop');
 
-    // Populate drawer fields
     document.getElementById('drawer-project-title').textContent = project.title;
     document.getElementById('drawer-stage-badge').textContent = `STAGE: ${project.stage.toUpperCase()}`;
     
@@ -368,7 +403,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('drawer-next-milestone-title').textContent = project.nextMilestone.title;
     document.getElementById('drawer-next-milestone-date').textContent = `⚡ Target: ${project.nextMilestone.date}`;
 
-    // Render milestone checklist
     const milestonesListEl = document.getElementById('drawer-milestones-list');
     milestonesListEl.innerHTML = '';
 
@@ -382,12 +416,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       li.querySelector('input').addEventListener('change', (e) => {
         m.completed = e.target.checked;
-        
-        // Recalculate percentage
         const completedCount = project.milestones.filter(item => item.completed).length;
         project.completionPercentage = Math.round((completedCount / project.milestones.length) * 100);
-
-        // Re-update drawer and cards stack
         openProjectDrawer(projectId);
         renderProjectsStack();
       });
@@ -395,7 +425,6 @@ document.addEventListener('DOMContentLoaded', () => {
       milestonesListEl.appendChild(li);
     });
 
-    // Show drawer & backdrop
     backdrop.classList.add('active');
     drawer.classList.add('active');
     drawer.setAttribute('aria-hidden', 'false');
@@ -415,9 +444,98 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
+     CENTERED MODAL OVERLAY (PROFILE & BIOMETRICS EDIT MODAL)
+     -------------------------------------------------------------------------- */
+  function openProfileModal() {
+    const backdrop = document.getElementById('profile-modal-backdrop');
+    if (!backdrop) return;
+
+    const u = appState.user;
+    document.getElementById('edit-user-name').value = u.name || 'Eliel Tavares';
+    document.getElementById('edit-user-role').value = u.role || 'Systems Architect';
+    document.getElementById('edit-user-birth').value = u.birthDate || '1994-08-15';
+    document.getElementById('edit-user-weight').value = u.weight || '78.5';
+    document.getElementById('edit-user-height').value = u.height || '1.78';
+    document.getElementById('edit-user-current-bmi').value = u.currentBmi || 24.8;
+    document.getElementById('edit-user-healthy-bmi').value = u.healthyBmi || '18.5 - 24.9';
+    document.getElementById('edit-user-commitment').value = u.commitmentStatus || 'ALTO (94%)';
+
+    backdrop.classList.add('active');
+  }
+
+  function closeProfileModal() {
+    const backdrop = document.getElementById('profile-modal-backdrop');
+    if (backdrop) backdrop.classList.remove('active');
+  }
+
+  /* --------------------------------------------------------------------------
      EVENT LISTENERS & INGESTION TERMINAL
      -------------------------------------------------------------------------- */
   function setupEventListeners() {
+    // Profile Card click / edit button click
+    const profileCard = document.getElementById('profile-card');
+    const profileEditBtn = document.getElementById('profile-edit-btn');
+    const profileModalBackdrop = document.getElementById('profile-modal-backdrop');
+    const profileModalClose = document.getElementById('profile-modal-close');
+    const profileModalCancel = document.getElementById('profile-modal-cancel');
+    const profileEditForm = document.getElementById('profile-edit-form');
+
+    if (profileCard) {
+      profileCard.addEventListener('click', (e) => {
+        openProfileModal();
+      });
+    }
+    if (profileEditBtn) {
+      profileEditBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openProfileModal();
+      });
+    }
+    if (profileModalClose) profileModalClose.addEventListener('click', closeProfileModal);
+    if (profileModalCancel) profileModalCancel.addEventListener('click', closeProfileModal);
+    if (profileModalBackdrop) {
+      profileModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === profileModalBackdrop) {
+          closeProfileModal();
+        }
+      });
+    }
+
+    // Auto-calculate BMI when weight or height changes in modal form
+    const weightInput = document.getElementById('edit-user-weight');
+    const heightInput = document.getElementById('edit-user-height');
+    const bmiInput = document.getElementById('edit-user-current-bmi');
+
+    function autoCalcBmi() {
+      const w = parseFloat(weightInput.value);
+      const h = parseFloat(heightInput.value);
+      if (w > 0 && h > 0) {
+        const calculated = (w / (h * h)).toFixed(1);
+        bmiInput.value = calculated;
+      }
+    }
+
+    if (weightInput) weightInput.addEventListener('input', autoCalcBmi);
+    if (heightInput) heightInput.addEventListener('input', autoCalcBmi);
+
+    // Profile Form Submission
+    if (profileEditForm) {
+      profileEditForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        appState.user.name = document.getElementById('edit-user-name').value.trim();
+        appState.user.role = document.getElementById('edit-user-role').value.trim();
+        appState.user.birthDate = document.getElementById('edit-user-birth').value;
+        appState.user.weight = document.getElementById('edit-user-weight').value;
+        appState.user.height = document.getElementById('edit-user-height').value;
+        appState.user.currentBmi = parseFloat(document.getElementById('edit-user-current-bmi').value) || 24.8;
+        appState.user.commitmentStatus = document.getElementById('edit-user-commitment').value.trim();
+
+        renderUserProfile();
+        closeProfileModal();
+      });
+    }
+
     // Context Switcher Filters
     const switcherBtns = document.querySelectorAll('.switcher-btn');
     switcherBtns.forEach(btn => {
@@ -439,7 +557,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = quickInput.value.trim();
       if (!text) return;
 
-      // Extract #tags and @dates
       const tagMatch = text.match(/#(\w+)/);
       const dateMatch = text.match(/@(\w+)/);
 
@@ -478,7 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Global Cmd + K or Ctrl + K shortcut
+    // Global Cmd + K or Ctrl + K shortcut & Escape close
     document.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -486,10 +603,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (e.key === 'Escape') {
         closeProjectDrawer();
+        closeProfileModal();
       }
     });
 
-    // Hint tag clicks
+    // Hint tags
     const hintTags = document.querySelectorAll('.hint-tag');
     hintTags.forEach(tag => {
       tag.addEventListener('click', () => {
@@ -523,7 +641,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Utility function to escape HTML string
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>"']/g, (m) => {
