@@ -1,0 +1,157 @@
+{
+  "user": {
+    "name": "Eliel Tavares",
+    "role": "Lead Architect & Systems Engineer",
+    "status": "Online",
+    "avatar": "ET"
+  },
+  "kpis": {
+    "focusScore": {
+      "value": 85,
+      "label": "Focus Score",
+      "target": "85%"
+    },
+    "healthMetric": {
+      "value": 92,
+      "label": "Health Index",
+      "history": [65, 70, 72, 78, 80, 82, 85, 84, 88, 90, 89, 92]
+    },
+    "financesMetric": {
+      "value": "$14,250",
+      "trend": "+12.4%",
+      "label": "Monthly Cashflow",
+      "isPositive": true
+    },
+    "learningMetric": {
+      "value": 68,
+      "label": "Quarterly Target",
+      "details": "34 / 50 Hours Completed"
+    }
+  },
+  "pipeline": {
+    "ideation": 2,
+    "construction": 4,
+    "validation": 1,
+    "completed": 8
+  },
+  "projects": [
+    {
+      "id": "proj-1",
+      "title": "Quantum Flow Engine",
+      "impactThesis": "Automate cross-cloud distributed workflow execution with sub-millisecond latency.",
+      "completionPercentage": 78,
+      "status": "ON TRACK",
+      "stage": "Construction",
+      "nextMilestone": {
+        "title": "gRPC Streaming Pipeline Integration",
+        "date": "Aug 08, 2026"
+      },
+      "milestones": [
+        { "title": "Core Async Event Loop Architecture", "completed": true },
+        { "title": "In-Memory State Snapshotting", "completed": true },
+        { "title": "gRPC Streaming Pipeline Integration", "completed": false },
+        { "title": "Multi-Region Distributed Failover", "completed": false }
+      ]
+    },
+    {
+      "id": "proj-2",
+      "title": "Aegis AI Guardrails",
+      "impactThesis": "Zero-trust prompt isolation & real-time PII redactor proxy for LLM APIs.",
+      "completionPercentage": 45,
+      "status": "DELAYED",
+      "stage": "Construction",
+      "nextMilestone": {
+        "title": "Contextual Embedding Filter Benchmark",
+        "date": "Aug 12, 2026"
+      },
+      "milestones": [
+        { "title": "Proxy Interceptor Middleware", "completed": true },
+        { "title": "Regex & Entity Recognition Rule Engine", "completed": true },
+        { "title": "Contextual Embedding Filter Benchmark", "completed": false },
+        { "title": "SOC2 Compliance Audit Trail Logger", "completed": false }
+      ]
+    },
+    {
+      "id": "proj-3",
+      "title": "Atlas Bio-Analytics Dashboard",
+      "impactThesis": "Unified clinical genomic data visualization & variant pathogenicity workbench.",
+      "completionPercentage": 90,
+      "status": "ON TRACK",
+      "stage": "Validation",
+      "nextMilestone": {
+        "title": "Final User Acceptance Testing & Vercel Edge Deploy",
+        "date": "Aug 05, 2026"
+      },
+      "milestones": [
+        { "title": "VCF Reader & High-throughput Parser", "completed": true },
+        { "title": "Interactive 3D Protein Viewer Module", "completed": true },
+        { "title": "ClinVar & gnomAD API Integration", "completed": true },
+        { "title": "Final User Acceptance Testing & Vercel Edge Deploy", "completed": false }
+      ]
+    },
+    {
+      "id": "proj-4",
+      "title": "Hyperion Design System",
+      "impactThesis": "Ultra-lightweight dark technical UI components & custom WebGL canvas shaders.",
+      "completionPercentage": 25,
+      "status": "ON TRACK",
+      "stage": "Ideation",
+      "nextMilestone": {
+        "title": "Tokens & Monospaced Typography Specs",
+        "date": "Aug 18, 2026"
+      },
+      "milestones": [
+        { "title": "Palette & CSS Variable Foundation", "completed": true },
+        { "title": "Tokens & Monospaced Typography Specs", "completed": false },
+        { "title": "Component Library Storybook", "completed": false }
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "id": "item-1",
+      "group": "Today",
+      "title": "Review gRPC proto schemas for Quantum Flow",
+      "projectTag": "#QuantumFlow",
+      "status": "ON TRACK",
+      "completed": true,
+      "time": "09:30 AM"
+    },
+    {
+      "id": "item-2",
+      "group": "Today",
+      "title": "Benchmark Aegis PII redact latency under load",
+      "projectTag": "#AegisAI",
+      "status": "DELAYED",
+      "completed": false,
+      "time": "02:15 PM"
+    },
+    {
+      "id": "item-3",
+      "group": "Today",
+      "title": "Deploy Atlas Bio-Analytics beta to staging Vercel",
+      "projectTag": "#AtlasBio",
+      "status": "ON TRACK",
+      "completed": false,
+      "time": "05:00 PM"
+    },
+    {
+      "id": "item-4",
+      "group": "Tomorrow",
+      "title": "Hyperion Design Token review with team",
+      "projectTag": "#HyperionUI",
+      "status": "ON TRACK",
+      "completed": false,
+      "time": "10:00 AM"
+    },
+    {
+      "id": "item-5",
+      "group": "Tomorrow",
+      "title": "Weekly architecture review & sprint retrospective",
+      "projectTag": "#SystemHealth",
+      "status": "ON TRACK",
+      "completed": false,
+      "time": "04:00 PM"
+    }
+  ]
+}
