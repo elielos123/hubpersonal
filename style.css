@@ -24,11 +24,11 @@
   --text-inverse: #11161B;
 
   /* Accents & Semiotics */
-  --accent-green: #00E676;     /* On Track / Meta Desejável */
+  --accent-green: #00E676;     /* On Track / Meta Desejável / Entradas */
   --accent-green-bg: rgba(0, 230, 118, 0.12);
   --accent-orange: #FF9100;    /* Delayed */
   --accent-orange-bg: rgba(255, 145, 0, 0.12);
-  --accent-red: #FF5252;       /* Critical / Incorreto / Alerta Discrepância */
+  --accent-red: #FF5252;       /* Critical / Incorreto / Saídas */
   --accent-red-bg: rgba(255, 82, 82, 0.15);
   --accent-cyan: #88C0D0;     /* Nível Correto (Azul) */
   --accent-blue: #5E81AC;
@@ -1078,7 +1078,7 @@ button, input {
   transform: scale(0.95); transition: transform var(--transition-normal);
 }
 
-.modal-container.large-modal { max-width: 760px; }
+.modal-container.large-modal { max-width: 780px; }
 .modal-backdrop.active .modal-container { transform: scale(1); }
 
 .modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-base); }
@@ -1090,111 +1090,195 @@ button, input {
 .modal-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; max-height: 80vh; overflow-y: auto; }
 
 /* --------------------------------------------------------------------------
-   10. HEALTH METRIC & HÁBITOS SAUDÁVEIS MODAL STYLES
+   10. FINANCES METRIC & BALANÇO FINANCEIRO MODAL STYLES
    -------------------------------------------------------------------------- */
-.imc-banner-box {
+.transaction-form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   background: var(--bg-base);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  padding: 16px;
 }
 
-.imc-banner-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.imc-banner-title {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent-cyan);
-  letter-spacing: 0.5px;
-}
-
-.imc-banner-desc {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.habits-form-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.form-section-title {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 1px;
-}
-
-.habit-group-box {
-  background: var(--bg-base);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.habit-group-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.habit-title {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.habit-status-pill {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--accent-green);
-  background: var(--accent-green-bg);
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(0, 230, 118, 0.2);
-}
-
-.exercise-type-selector {
+.tx-type-selector {
   display: flex;
   gap: 8px;
 }
 
-.exercise-type-btn {
+.tx-type-btn {
   flex: 1;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: var(--radius-md);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 12px;
   cursor: pointer;
   transition: var(--transition-fast);
 }
 
-.exercise-type-btn:hover {
-  background: var(--bg-card-hover);
-  color: var(--text-primary);
-}
-
-.exercise-type-btn.active {
+.btn-tx-entrada.active {
   background: var(--accent-green-bg);
   border-color: var(--accent-green);
   color: var(--accent-green);
+}
+
+.btn-tx-saida.active {
+  background: var(--accent-red-bg);
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.balance-views-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.balance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.balance-card {
+  background: var(--bg-base);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.balance-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.balance-val {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.balance-subtext {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-secondary);
+}
+
+/* Tag Budget Ranking */
+.tag-ranking-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tag-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tag-rank-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-base);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.tag-rank-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tag-rank-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.tag-rank-val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+.tag-rank-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--border-color);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.tag-rank-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-orange) 0%, var(--accent-red) 100%);
+  border-radius: var(--radius-pill);
+}
+
+/* Recent Transaction Table */
+.recent-tx-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tx-history-table-wrapper {
+  overflow-x: auto;
+}
+
+.tx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tx-table th {
+  font-family: var(--font-mono);
+  font-font-size: 10px;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tx-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.tx-type-badge-in {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent-green);
+  background: var(--accent-green-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.tx-type-badge-out {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent-red);
+  background: var(--accent-red-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 
 /* Form Controls */
@@ -1238,6 +1322,7 @@ button, input {
   .stage-arrow { display: none; }
   .top-bar { padding: 0 16px; }
   .system-status-indicator { display: none; }
+  .balance-grid { grid-template-columns: 1fr; }
 }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
