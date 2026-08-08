@@ -90,6 +90,21 @@
               <span class="bio-value-mono text-muted" id="user-healthy-bmi">18.5 - 24.9</span>
             </div>
           </div>
+
+          <!-- Indicador Visual do IMC (Linha Verde Desejável + Linha Azul/Vermelha Atual) -->
+          <div class="imc-dual-line-container" style="margin-top: 6px;">
+            <div class="imc-line-legend">
+              <span class="legend-item"><span class="legend-dot green"></span> Meta (Desejável)</span>
+              <span class="legend-item"><span class="legend-dot" id="imc-current-legend-dot"></span> Nível Atual</span>
+            </div>
+            <svg class="imc-lines-svg" viewBox="0 0 200 24" preserveAspectRatio="none" id="card1-imc-svg">
+              <!-- Linha Verde Desejável -->
+              <line x1="0" y1="8" x2="200" y2="8" stroke="#00E676" stroke-width="2.5" stroke-dasharray="3,3" />
+              <!-- Linha Atual (Azul se saudável, Vermelho se fora) -->
+              <line x1="0" y1="16" x2="200" y2="16" stroke="#88C0D0" stroke-width="3.5" stroke-linecap="round" id="card1-imc-current-line" />
+            </svg>
+          </div>
+
           <div class="bio-row commitment-row">
             <span class="bio-label">COMPROMETIMENTO</span>
             <span class="commitment-badge" id="user-commitment">ALTO (94%)</span>
@@ -145,11 +160,11 @@
           </div>
         </div>
 
-        <!-- 2. Health Metric Card (Clickable to open Healthy Habits & Caloric Balance Modal) -->
+        <!-- 2. Health Metric Card -->
         <div class="card kpi-card clickable-card" id="health-metric-card" title="Clique para gerenciar Hábitos Saudáveis, Exercícios e Calorias">
           <div class="kpi-header">
             <span class="kpi-title">Health Metric</span>
-            <span class="badge badge-imc-green" id="card-imc-badge">IMC 24.8 SAUDÁVEL</span>
+            <span class="badge badge-imc-blue" id="card-imc-badge">IMC 24.8 CORRETO</span>
           </div>
           <div class="sparkline-wrapper">
             <svg class="sparkline-svg" viewBox="0 0 120 30" preserveAspectRatio="none" id="health-sparkline">
@@ -556,14 +571,27 @@
 
       <div class="modal-body">
         
-        <!-- 1. IMC Health Status Banner -->
+        <!-- 1. IMC Health Status Banner & Visual Lines -->
         <div class="imc-banner-box" id="imc-banner-box">
           <div class="imc-banner-header">
-            <span class="imc-banner-title">CRITÉRIO BASE IMC ATUAL</span>
-            <span class="badge badge-imc-green" id="modal-imc-status-badge">IMC 24.8 — SAUDÁVEL</span>
+            <span class="imc-banner-title">VISUALIZAÇÃO DE IMC</span>
+            <span class="badge badge-imc-blue" id="modal-imc-status-badge">IMC 24.8 — NÍVEL CORRETO</span>
           </div>
+
+          <!-- Dual Line Visual Indicator -->
+          <div class="imc-dual-line-container">
+            <div class="imc-line-legend">
+              <span class="legend-item"><span class="legend-dot green"></span> Linha Meta (Verde Desejável)</span>
+              <span class="legend-item"><span class="legend-dot" id="modal-imc-legend-dot"></span> Linha Atual (Azul Nível Correto / Vermelho Acima/Abaixo)</span>
+            </div>
+            <svg class="imc-lines-svg" viewBox="0 0 400 30" preserveAspectRatio="none" id="modal-imc-svg">
+              <line x1="0" y1="10" x2="400" y2="10" stroke="#00E676" stroke-width="3" stroke-dasharray="4,4" />
+              <line x1="0" y1="22" x2="400" y2="22" stroke="#88C0D0" stroke-width="4" stroke-linecap="round" id="modal-imc-current-line" />
+            </svg>
+          </div>
+
           <div class="imc-banner-desc" id="modal-imc-desc">
-            Seu IMC atual está dentro da faixa de referência saudável (18.5 - 24.9).
+            Seu IMC atual está no nível correto (linha azul). A linha verde representa o critério saudável desejável (18.5 - 24.9).
           </div>
         </div>
 
@@ -644,8 +672,6 @@
 
         <!-- 3. Gráficos dos Hábitos Section (SVG) -->
         <div class="charts-section">
-          
-          <!-- Gráfico 1: Realizações dos Hábitos no Dia -->
           <div class="chart-box">
             <div class="chart-header">
               <span class="chart-title">GRÁFICO 1: REALIZAÇÃO DIÁRIA DOS HÁBITOS (CONCLUÍDOS VS PENDENTES)</span>
@@ -653,14 +679,12 @@
             <div class="chart-svg-container" id="chart-habits-fulfillment-container"></div>
           </div>
 
-          <!-- Gráfico 2: Diferença / Variância para as Metas (Sono & Calorias) -->
           <div class="chart-box">
             <div class="chart-header">
               <span class="chart-title">GRÁFICO 2: VARIÂNCIA E DIFERENÇA DAS METAS (SONO & BALANÇO CALÓRICO)</span>
             </div>
             <div class="chart-svg-container" id="chart-habits-variance-container"></div>
           </div>
-
         </div>
 
       </div>
