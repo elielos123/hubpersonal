@@ -1,10 +1,17 @@
 /* ==========================================================================
    PERSONAL DASHBOARD COMMAND CENTER - JAVASCRIPT ENGINE
+   Persistence: LocalStorage + Vercel Serverless Sync API + GitHub Auto Commit
+   Timestamp Guard: Client > Cloud over-writes; Cloud > Client pulls cloud.
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Global Application State
+  const STORAGE_KEY = 'command_center_state';
+  const GITHUB_OWNER = 'elielos123';
+  const GITHUB_REPO = 'hubpersonal';
+
+  // Default Global Application State
   let appState = {
+    lastUpdated: "2026-08-08T01:19:24.000Z",
     user: {
       name: "Eliel Tavares",
       role: "Lead Architect & Systems Engineer",
@@ -96,22 +103,24 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedProjectId: null
   };
 
-  // Attempt to fetch fresh project JSON data if running via web server
-  fetch('projects.json')
-    .then(response => response.ok ? response.json() : null)
-    .then(data => {
-      if (data) {
-        appState.user = Object.assign({}, appState.user, data.user || {});
-        appState.kpis = data.kpis || appState.kpis;
-        appState.pipeline = data.pipeline || appState.pipeline;
-        appState.projects = data.projects || appState.projects;
-        appState.timeline = data.timeline || appState.timeline;
+  // 1. Check LocalStorage first
+  const localSaved = localStorage.getItem(STORAGE_KEY);
+  if (localSaved) {
+    try {
+      const parsed = JSON.parse(localSaved);
+      if (parsed && parsed.user) {
+        appState = Object.assign({}, appState, parsed);
       }
-    })
-    .catch(() => console.log('Using local fallback state.'))
-    .finally(() => {
-      initApp();
-    });
+    } catch (e) {
+      console.warn('Invalid local storage cache');
+    }
+  }
+
+  // 2. Initial Setup
+  initApp();
+
+  // 3. Trigger initial cloud sync check
+  syncWithCloud();
 
   function initApp() {
     setupLiveClock();
@@ -121,6 +130,149 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPipelineFooter();
     renderDeliveryStream();
     setupEventListeners();
+  }
+
+  /* --------------------------------------------------------------------------
+     STATE PERSISTENCE & TIMESTAMP CONFLICT GUARD
+     -------------------------------------------------------------------------- */
+  function updateState(updaterFn) {
+    if (typeof updaterFn === 'function') {
+      updaterFn(appState);
+    }
+    appState.lastUpdated = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    
+    updateSyncBadge('syncing', 'Sincronizando...');
+    syncWithCloud();
+  }
+
+  async function syncWithCloud() {
+    updateSyncBadge('syncing', 'Conectando nuvem...');
+
+    try {
+      // First attempt: Vercel Serverless Function /api/sync
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          state: appState,
+          clientTimestamp: appState.lastUpdated || new Date().toISOString()
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.action === 'pulled_cloud_to_client' && data.cloudState) {
+          // Cloud was newer! Update client state from cloud
+          appState = Object.assign({}, appState, data.cloudState);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+          renderAll();
+          updateSyncBadge('synced', `☁️ Nuvem (Atualizado do Servidor)`);
+        } else {
+          updateSyncBadge('synced', `☁️ Sincronizado (Nuvem/GitHub)`);
+        }
+        return;
+      }
+    } catch (e) {
+      // Fallback for local development or static hosting: direct GitHub REST API sync
+      await fallbackGitHubSync();
+    }
+  }
+
+  async function fallbackGitHubSync() {
+    try {
+      const fileUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/projects.json`;
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'CommandCenterApp'
+      };
+
+      const checkRes = await fetch(fileUrl, { headers });
+      if (!checkRes.ok) throw new Error('GitHub API unreachable');
+
+      const ghData = await checkRes.json();
+      const contentUtf8 = Buffer.from(ghData.content, 'base64').toString('utf8');
+      const cloudState = JSON.parse(contentUtf8);
+      const cloudTime = new Date(cloudState.lastUpdated || '1970-01-01').getTime();
+      const clientTime = new Date(appState.lastUpdated || '1970-01-01').getTime();
+
+      if (cloudTime > clientTime) {
+        // Cloud is newer: Pull cloud data into client
+        appState = Object.assign({}, appState, cloudState);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        renderAll();
+        updateSyncBadge('synced', `☁️ GitHub: Dados Atualizados`);
+      } else {
+        updateSyncBadge('synced', `💾 Salvo no Navegador`);
+      }
+    } catch (err) {
+      console.log('Sync fallback notice:', err.message);
+      updateSyncBadge('synced', `💾 Salvo no Navegador`);
+    }
+  }
+
+  function updateSyncBadge(status, text) {
+    const dot = document.getElementById('sync-status-dot');
+    const label = document.getElementById('sync-status-text');
+
+    if (dot) {
+      dot.className = `sync-dot ${status === 'synced' ? 'dot-synced' : status === 'syncing' ? 'dot-syncing' : 'dot-conflict'}`;
+    }
+    if (label) {
+      label.textContent = text;
+    }
+  }
+
+  function renderAll() {
+    renderUserProfile();
+    renderKPIs();
+    renderProjectsStack();
+    renderPipelineFooter();
+    renderDeliveryStream();
+  }
+
+  /* --------------------------------------------------------------------------
+     EXPORT & IMPORT BACKUP (JSON)
+     -------------------------------------------------------------------------- */
+  function exportBackupJSON() {
+    appState.lastUpdated = new Date().toISOString();
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+    const downloadAnchor = document.createElement('a');
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `dashboard_backup_${dateStamp}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    alert('Backup baixado com sucesso!');
+  }
+
+  function importBackupJSON(file) {
+    if (!file) return;
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (imported && (imported.user || imported.projects)) {
+          appState = Object.assign({}, appState, imported);
+          appState.lastUpdated = new Date().toISOString();
+          
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+          renderAll();
+          syncWithCloud();
+          alert('Backup restaurado e sincronizado com sucesso!');
+        } else {
+          alert('Arquivo de backup inválido.');
+        }
+      } catch (err) {
+        alert('Erro ao ler o arquivo JSON de backup.');
+      }
+    };
+
+    reader.readAsText(file);
   }
 
   /* --------------------------------------------------------------------------
@@ -363,7 +515,9 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         li.addEventListener('click', () => {
-          item.completed = !item.completed;
+          updateState(s => {
+            item.completed = !item.completed;
+          });
           renderDeliveryStream();
         });
 
@@ -415,9 +569,12 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       li.querySelector('input').addEventListener('change', (e) => {
-        m.completed = e.target.checked;
-        const completedCount = project.milestones.filter(item => item.completed).length;
-        project.completionPercentage = Math.round((completedCount / project.milestones.length) * 100);
+        updateState(s => {
+          m.completed = e.target.checked;
+          const completedCount = project.milestones.filter(item => item.completed).length;
+          project.completionPercentage = Math.round((completedCount / project.milestones.length) * 100);
+        });
+
         openProjectDrawer(projectId);
         renderProjectsStack();
       });
@@ -472,6 +629,36 @@ document.addEventListener('DOMContentLoaded', () => {
      EVENT LISTENERS & INGESTION TERMINAL
      -------------------------------------------------------------------------- */
   function setupEventListeners() {
+    // Backup Actions
+    const btnDownload = document.getElementById('btn-download-backup');
+    const btnRestore = document.getElementById('btn-restore-backup');
+    const btnSyncNow = document.getElementById('btn-sync-now');
+    const fileInput = document.getElementById('backup-file-input');
+
+    const modalBtnDownload = document.getElementById('modal-btn-download');
+    const modalBtnRestore = document.getElementById('modal-btn-restore');
+
+    if (btnDownload) btnDownload.addEventListener('click', exportBackupJSON);
+    if (modalBtnDownload) modalBtnDownload.addEventListener('click', exportBackupJSON);
+
+    if (btnRestore) btnRestore.addEventListener('click', () => fileInput && fileInput.click());
+    if (modalBtnRestore) modalBtnRestore.addEventListener('click', () => fileInput && fileInput.click());
+
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          importBackupJSON(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+    }
+
+    if (btnSyncNow) {
+      btnSyncNow.addEventListener('click', () => {
+        syncWithCloud();
+      });
+    }
+
     // Profile Card click / edit button click
     const profileCard = document.getElementById('profile-card');
     const profileEditBtn = document.getElementById('profile-edit-btn');
@@ -481,7 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const profileEditForm = document.getElementById('profile-edit-form');
 
     if (profileCard) {
-      profileCard.addEventListener('click', (e) => {
+      profileCard.addEventListener('click', () => {
         openProfileModal();
       });
     }
@@ -523,13 +710,15 @@ document.addEventListener('DOMContentLoaded', () => {
       profileEditForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
-        appState.user.name = document.getElementById('edit-user-name').value.trim();
-        appState.user.role = document.getElementById('edit-user-role').value.trim();
-        appState.user.birthDate = document.getElementById('edit-user-birth').value;
-        appState.user.weight = document.getElementById('edit-user-weight').value;
-        appState.user.height = document.getElementById('edit-user-height').value;
-        appState.user.currentBmi = parseFloat(document.getElementById('edit-user-current-bmi').value) || 24.8;
-        appState.user.commitmentStatus = document.getElementById('edit-user-commitment').value.trim();
+        updateState(s => {
+          s.user.name = document.getElementById('edit-user-name').value.trim();
+          s.user.role = document.getElementById('edit-user-role').value.trim();
+          s.user.birthDate = document.getElementById('edit-user-birth').value;
+          s.user.weight = document.getElementById('edit-user-weight').value;
+          s.user.height = document.getElementById('edit-user-height').value;
+          s.user.currentBmi = parseFloat(document.getElementById('edit-user-current-bmi').value) || 24.8;
+          s.user.commitmentStatus = document.getElementById('edit-user-commitment').value.trim();
+        });
 
         renderUserProfile();
         closeProfileModal();
@@ -575,7 +764,10 @@ document.addEventListener('DOMContentLoaded', () => {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
-      appState.timeline.unshift(newItem);
+      updateState(s => {
+        s.timeline.unshift(newItem);
+      });
+
       quickInput.value = '';
       renderDeliveryStream();
     }
@@ -595,7 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Global Cmd + K or Ctrl + K shortcut & Escape close
+    // Global Shortcuts
     document.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -633,7 +825,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!appState.selectedProjectId) return;
         const proj = appState.projects.find(p => p.id === appState.selectedProjectId);
         if (proj) {
-          proj.status = proj.status === 'ON TRACK' ? 'DELAYED' : 'ON TRACK';
+          updateState(s => {
+            proj.status = proj.status === 'ON TRACK' ? 'DELAYED' : 'ON TRACK';
+          });
           openProjectDrawer(proj.id);
           renderProjectsStack();
         }
