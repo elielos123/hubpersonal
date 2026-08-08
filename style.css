@@ -783,6 +783,19 @@ button, input {
 .badge-delayed { background-color: var(--accent-orange-bg); color: var(--accent-orange); border: 1px solid rgba(255, 145, 0, 0.3); }
 .badge-critical { background-color: var(--accent-red-bg); color: var(--accent-red); border: 1px solid rgba(255, 82, 82, 0.3); }
 
+/* IMC Health Badges */
+.badge-imc-green {
+  background-color: var(--accent-green-bg);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+}
+
+.badge-imc-red {
+  background-color: var(--accent-red-bg);
+  color: var(--accent-red);
+  border: 1px solid rgba(255, 82, 82, 0.3);
+}
+
 .impact-thesis {
   font-size: 13px;
   color: var(--text-secondary);
@@ -940,12 +953,9 @@ button, input {
    8. SLIDING SIDE DRAWER MODAL & CENTERED MODAL OVERLAY SYSTEM
    -------------------------------------------------------------------------- */
 .drawer-backdrop {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(11, 15, 19, 0.7);
-  backdrop-filter: blur(4px);
-  z-index: 200; opacity: 0; pointer-events: none;
-  transition: opacity var(--transition-normal);
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(11, 15, 19, 0.7); backdrop-filter: blur(4px);
+  z-index: 200; opacity: 0; pointer-events: none; transition: opacity var(--transition-normal);
 }
 .drawer-backdrop.active { opacity: 1; pointer-events: auto; }
 
@@ -1017,10 +1027,7 @@ button, input {
   transform: scale(0.95); transition: transform var(--transition-normal);
 }
 
-.modal-container.large-modal {
-  max-width: 760px;
-}
-
+.modal-container.large-modal { max-width: 760px; }
 .modal-backdrop.active .modal-container { transform: scale(1); }
 
 .modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-base); }
@@ -1032,162 +1039,114 @@ button, input {
 .modal-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; max-height: 80vh; overflow-y: auto; }
 
 /* --------------------------------------------------------------------------
-   10. FOCUS SCORE & TASK TIMER MODULE STYLES
+   10. HEALTH METRIC & HÁBITOS SAUDÁVEIS MODAL STYLES
    -------------------------------------------------------------------------- */
-.timer-widget-card {
-  background: var(--bg-base);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.timer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.timer-title-text {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent-cyan);
-  letter-spacing: 1px;
-}
-
-.timer-mode-switcher {
-  display: flex;
-  gap: 4px;
-  background: var(--bg-card);
-  padding: 3px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-}
-
-.timer-mode-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.timer-mode-btn.active {
-  background: var(--border-color);
-  color: var(--accent-cyan);
-  font-weight: 700;
-}
-
-.timer-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.timer-display-hero {
-  font-family: var(--font-mono);
-  font-size: 38px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 2px;
-  text-shadow: 0 0 12px rgba(136, 192, 208, 0.3);
-}
-
-.timer-controls {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-timer-control {
-  padding: 6px 14px;
-  font-size: 12px;
-}
-
-/* Criteria Grid */
-.criteria-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.criteria-card {
-  background: var(--bg-base);
-  border: 1px solid var(--border-subtle);
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.criteria-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-muted);
-}
-
-.criteria-val {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 13px;
-}
-
-.text-green { color: var(--accent-green); }
-.text-cyan { color: var(--accent-cyan); }
-.text-orange { color: var(--accent-orange); }
-.text-blue { color: var(--accent-blue); }
-
-/* Charts Section */
-.charts-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 6px;
-}
-
-.chart-box {
+.imc-banner-box {
   background: var(--bg-base);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
-.chart-header {
+.imc-banner-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.chart-title {
+.imc-banner-title {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
+  color: var(--accent-cyan);
+  letter-spacing: 0.5px;
+}
+
+.imc-banner-desc {
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
-.chart-subtitle-mono {
+.habits-form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-section-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.habit-group-box {
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.habit-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.habit-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.habit-status-pill {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: var(--text-muted);
+  color: var(--accent-green);
+  background: var(--accent-green-bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(0, 230, 118, 0.2);
 }
 
-.chart-svg-container {
-  width: 100%;
-  height: 140px;
+.exercise-type-selector {
+  display: flex;
+  gap: 8px;
 }
 
-/* Form Styles */
+.exercise-type-btn {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.exercise-type-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.exercise-type-btn.active {
+  background: var(--accent-green-bg);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+/* Form Controls */
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .form-label { font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--text-secondary); }
