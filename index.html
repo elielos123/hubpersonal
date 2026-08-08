@@ -95,6 +95,29 @@
             <span class="commitment-badge" id="user-commitment">ALTO (94%)</span>
           </div>
         </div>
+
+        <!-- 3-Layer Persistence, Sync & Backup Action Bar -->
+        <div class="backup-action-bar" id="backup-action-bar">
+          <div class="sync-status-row">
+            <span class="sync-dot dot-syncing" id="sync-status-dot"></span>
+            <span class="sync-status-text" id="sync-status-text">☁️ Nuvem: Sincronizado</span>
+          </div>
+          <div class="backup-btn-group">
+            <button class="btn-backup-action" id="btn-download-backup" title="Baixar arquivo JSON de backup" onclick="event.stopPropagation()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Baixar Backup</span>
+            </button>
+            <button class="btn-backup-action" id="btn-restore-backup" title="Restaurar backup JSON" onclick="event.stopPropagation()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Restaurar</span>
+            </button>
+            <button class="btn-backup-action icon-only" id="btn-sync-now" title="Forçar sincronização com nuvem/GitHub" onclick="event.stopPropagation()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            </button>
+          </div>
+          <!-- Hidden file input for backup restore -->
+          <input type="file" id="backup-file-input" accept=".json" style="display: none;" />
+        </div>
       </div>
 
       <!-- System Health Indicators (KPIs) -->
@@ -430,6 +453,19 @@
           <label class="form-label" for="edit-user-commitment">Status de Comprometimento</label>
           <input type="text" id="edit-user-commitment" class="form-input" placeholder="ex: ALTO (94%)" required />
           <span class="form-hint">Ponto de referência a ser integrado com outras janelas posteriormente.</span>
+        </div>
+
+        <!-- Backup & Persistence Tools inside Modal -->
+        <div class="modal-section-box">
+          <span class="modal-section-title">GERENCIAMENTO DE BACKUP & PERSISTÊNCIA</span>
+          <div class="modal-backup-buttons">
+            <button type="button" class="btn btn-secondary" id="modal-btn-download">
+              📥 Baixar Backup JSON
+            </button>
+            <button type="button" class="btn btn-secondary" id="modal-btn-restore">
+              📤 Restaurar Backup
+            </button>
+          </div>
         </div>
 
         <div class="modal-footer">
