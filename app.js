@@ -2,6 +2,7 @@
    PERSONAL DASHBOARD COMMAND CENTER - JAVASCRIPT ENGINE
    Features: 3-Layer Persistence, Timestamp Guard, Task Timer (Cronômetro/Regressivo/Pomodoro),
    Focus Score 4-Criteria Engine, Health Metric & Hábitos Saudáveis Engine,
+   Finances Metric & Balanço Financeiro Engine (Entradas/Saídas, Diário/Semanal/Mensal, Tag Budget Ranking),
    Visualização de IMC com Linha Verde Meta Desejável (21.7) e Linha Vermelha de Discrepância (% Acima),
    and Comparative SVG Charts.
    ========================================================================== */
@@ -13,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Default Global Application State
   let appState = {
-    lastUpdated: "2026-08-08T01:52:18.000Z",
+    lastUpdated: "2026-08-08T01:59:22.000Z",
     user: {
       name: "Eliel Tavares",
       role: "Lead Architect & Systems Engineer",
@@ -46,34 +47,25 @@ document.addEventListener('DOMContentLoaded', () => {
         value: 92,
         label: "Health Index",
         history: [65, 70, 72, 78, 80, 82, 85, 84, 88, 90, 89, 92],
-        sleep: {
-          hours: 7.5,
-          target: 7.5,
-          completed: true
-        },
-        exercise: {
-          type: "Cardio",
-          time: "07:00 AM",
-          durationMinutes: 45,
-          completed: true
-        },
-        caloricBalance: {
-          intakeKcal: 2100,
-          expenditureKcal: 2450,
-          netKcal: -350,
-          isPositive: true,
-          completed: true
-        }
+        sleep: { hours: 7.5, target: 7.5, completed: true },
+        exercise: { type: "Cardio", time: "07:00 AM", durationMinutes: 45, completed: true },
+        caloricBalance: { intakeKcal: 2100, expenditureKcal: 2450, netKcal: -350, isPositive: true, completed: true }
       },
-      financesMetric: { value: "$14,250", trend: "+12.4%", label: "Monthly Cashflow", isPositive: true },
+      financesMetric: {
+        value: "$14,250",
+        trend: "+12.4%",
+        label: "Monthly Cashflow",
+        isPositive: true,
+        transactions: [
+          { id: "tx-1", type: "entrada", value: 18500, date: "2026-08-08", description: "Enterprise Retainer Client A", tag: "#Salary" },
+          { id: "tx-2", type: "saida", value: 2450, date: "2026-08-08", description: "AWS & Vercel Edge Infrastructure", tag: "#Server" },
+          { id: "tx-3", type: "saida", value: 1200, date: "2026-08-07", description: "GitHub Copilot & Figma Software", tag: "#SaaS" },
+          { id: "tx-4", type: "saida", value: 600, date: "2026-08-06", description: "Google Ads Campaign", tag: "#Marketing" }
+        ]
+      },
       learningMetric: { value: 68, label: "Quarterly Target", details: "34 / 50 Hours Completed" }
     },
-    timerState: {
-      mode: 'pomodoro',
-      seconds: 1500,
-      initialSeconds: 1500,
-      isRunning: false
-    },
+    timerState: { mode: 'pomodoro', seconds: 1500, initialSeconds: 1500, isRunning: false },
     pipeline: { ideation: 2, construction: 4, validation: 1, completed: 8 },
     projects: [
       {
@@ -144,7 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
       { id: "item-5", group: "Tomorrow", title: "Weekly architecture review & sprint retrospective", projectTag: "#SystemHealth", status: "ON TRACK", completed: false, time: "04:00 PM" }
     ],
     activeFilter: "ALL",
-    selectedProjectId: null
+    selectedProjectId: null,
+    currentTxType: 'entrada'
   };
 
   let timerInterval = null;
@@ -177,13 +170,70 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     HEALTH METRICS & HÁBITOS SAUDÁVEIS ENGINE WITH DISCREPANCY & % ABOVE TARGET
+     FINANCES METRIC & BALANÇO FINANCEIRO CALCULATOR ENGINE
+     -------------------------------------------------------------------------- */
+  function calculateFinancesMetrics() {
+    const txs = appState.kpis.financesMetric.transactions || [];
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+
+    // 7 days ago timestamp
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    let dailyIn = 0, dailyOut = 0;
+    let weeklyIn = 0, weeklyOut = 0;
+    let totalIn = 0, totalOut = 0;
+
+    const tagExpenses = {};
+
+    txs.forEach(tx => {
+      const val = parseFloat(tx.value) || 0;
+      const txDate = new Date(tx.date || todayStr);
+
+      if (tx.type === 'entrada') {
+        totalIn += val;
+        if (tx.date === todayStr) dailyIn += val;
+        if (txDate >= sevenDaysAgo) weeklyIn += val;
+      } else if (tx.type === 'saida') {
+        totalOut += val;
+        if (tx.date === todayStr) dailyOut += val;
+        if (txDate >= sevenDaysAgo) weeklyOut += val;
+
+        // Group Saídas by Tag
+        const tag = (tx.tag || '#Outros').trim();
+        tagExpenses[tag] = (tagExpenses[tag] || 0) + val;
+      }
+    });
+
+    const dailyNet = dailyIn - dailyOut;
+    const weeklyNet = weeklyIn - weeklyOut;
+    const monthlyNet = totalIn - totalOut;
+
+    // Rank expense tags from highest spending to lowest & compute budget %
+    const rankedTags = Object.keys(tagExpenses).map(tag => {
+      const spend = tagExpenses[tag];
+      const pctOfBudget = totalIn > 0 ? ((spend / totalIn) * 100).toFixed(1) : '0.0';
+      return { tag, spend, pctOfBudget: parseFloat(pctOfBudget) };
+    }).sort((a, b) => b.spend - a.spend);
+
+    appState.kpis.financesMetric.value = `$${monthlyNet.toLocaleString()}`;
+
+    return {
+      dailyIn, dailyOut, dailyNet,
+      weeklyIn, weeklyOut, weeklyNet,
+      totalIn, totalOut, monthlyNet,
+      rankedTags,
+      transactions: txs
+    };
+  }
+
+  /* --------------------------------------------------------------------------
+     HEALTH METRICS & HÁBITOS SAUDÁVEIS ENGINE
      -------------------------------------------------------------------------- */
   function calculateHealthMetrics() {
     const bmi = parseFloat(appState.user.currentBmi) || 24.8;
-    const idealTargetBmi = 21.7; // Midpoint healthy baseline target
-
-    // Calculate percentage above ideal target
+    const idealTargetBmi = 21.7;
     const pctAbove = (((bmi - idealTargetBmi) / idealTargetBmi) * 100).toFixed(1);
     const isAboveTarget = bmi > idealTargetBmi;
     const isHealthyRange = bmi >= 18.5 && bmi <= 24.9;
@@ -199,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isCaloriePositive = false;
     if (bmi > 21.7) {
-      isCaloriePositive = netKcal < 0; // Negative deficit is positive when above target
+      isCaloriePositive = netKcal < 0;
     } else {
       isCaloriePositive = netKcal <= 300;
     }
@@ -213,21 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
     appState.kpis.healthMetric.value = healthScore > 0 ? healthScore : 92;
 
     return {
-      bmi,
-      idealTargetBmi,
-      pctAbove,
-      isAboveTarget,
-      isHealthyRange,
+      bmi, idealTargetBmi, pctAbove, isAboveTarget, isHealthyRange,
       sleepHours: sleep.hours,
       sleepDiff: sleepDiff > 0 ? `+${sleepDiff.toFixed(1)}h` : `${sleepDiff.toFixed(1)}h`,
       isSleepHealthy,
-      exerciseType: exercise.type,
-      exerciseTime: exercise.time,
-      exerciseDuration: exercise.durationMinutes,
-      intakeKcal: cal.intakeKcal,
-      expenditureKcal: cal.expenditureKcal,
-      netKcal,
-      isCaloriePositive,
+      exerciseType: exercise.type, exerciseTime: exercise.time, exerciseDuration: exercise.durationMinutes,
+      intakeKcal: cal.intakeKcal, expenditureKcal: cal.expenditureKcal, netKcal, isCaloriePositive,
       completedHabits
     };
   }
@@ -236,9 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
      FOCUS SCORE & 4 CRITERIA CALCULATION ENGINE
      -------------------------------------------------------------------------- */
   function calculateFocusScore() {
-    let completedCount = 0;
-    let pendingCount = 0;
-    let delayedCount = 0;
+    let completedCount = 0, pendingCount = 0, delayedCount = 0;
 
     appState.timeline.forEach(item => {
       if (item.completed) completedCount++;
@@ -263,9 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     appState.kpis.focusScore.value = score;
     return {
-      score,
-      completedCount,
-      pendingCount,
+      score, completedCount, pendingCount,
       delayedCount: Math.ceil(delayedCount),
       accumulatedHours: accumulatedHours.toFixed(1),
       targetHours: dw.targetHours
@@ -487,120 +524,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     HÁBITOS SAUDÁVEIS SVG CHARTS RENDERER
-     -------------------------------------------------------------------------- */
-  function renderHabitsFulfillmentChart(hMetrics) {
-    const container = document.getElementById('chart-habits-fulfillment-container');
-    if (!container) return;
-
-    const completed = hMetrics.completedHabits || 3;
-    const pending = 3 - completed;
-
-    container.innerHTML = `
-      <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
-        <line x1="0" y1="60" x2="400" y2="60" stroke="#232C36" stroke-dasharray="3,3" />
-
-        <rect x="80" y="${100 - (completed * 25)}" width="90" height="${completed * 25}" rx="4" fill="#00E676" />
-        <text x="125" y="${88 - (completed * 25)}" fill="#00E676" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${completed} Hábitos (${Math.round((completed/3)*100)}%)</text>
-        <text x="125" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Realizados Hoje</text>
-
-        <rect x="230" y="${100 - (pending * 25)}" width="90" height="${pending * 25}" rx="4" fill="#FF9100" />
-        <text x="275" y="${88 - (pending * 25)}" fill="#FF9100" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${pending} Pendentes</text>
-        <text x="275" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Não Realizados</text>
-      </svg>
-    `;
-  }
-
-  function renderHabitsVarianceChart(hMetrics) {
-    const container = document.getElementById('chart-habits-variance-container');
-    if (!container) return;
-
-    const sleepDiffVal = (hMetrics.sleepHours - 7.5).toFixed(1);
-    const netKcal = hMetrics.netKcal;
-
-    container.innerHTML = `
-      <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
-        <line x1="0" y1="60" x2="400" y2="60" stroke="#5E81AC" stroke-width="1.5" />
-
-        <rect x="70" y="${sleepDiffVal >= 0 ? 60 - Math.min(45, Math.abs(sleepDiffVal) * 20) : 60}" width="80" height="${Math.max(10, Math.min(45, Math.abs(sleepDiffVal) * 20))}" rx="4" fill="${hMetrics.isSleepHealthy ? '#00E676' : '#FF9100'}" />
-        <text x="110" y="${sleepDiffVal >= 0 ? 50 - Math.min(45, Math.abs(sleepDiffVal) * 20) : 80 + Math.min(45, Math.abs(sleepDiffVal) * 20)}" fill="${hMetrics.isSleepHealthy ? '#00E676' : '#FF9100'}" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${hMetrics.sleepDiff}</text>
-        <text x="110" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Sono vs Meta</text>
-
-        <rect x="250" y="${netKcal <= 0 ? 60 - Math.min(45, Math.abs(netKcal) / 10) : 60}" width="80" height="${Math.max(10, Math.min(45, Math.abs(netKcal) / 10))}" rx="4" fill="${hMetrics.isCaloriePositive ? '#00E676' : '#FF5252'}" />
-        <text x="290" y="${netKcal <= 0 ? 50 - Math.min(45, Math.abs(netKcal) / 10) : 80 + Math.min(45, Math.abs(netKcal) / 10)}" fill="${hMetrics.isCaloriePositive ? '#00E676' : '#FF5252'}" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${netKcal} kcal</text>
-        <text x="290" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Balanço Calórico</text>
-      </svg>
-    `;
-  }
-
-  /* --------------------------------------------------------------------------
-     FOCUS SCORE SVG CHARTS RENDERER
-     -------------------------------------------------------------------------- */
-  function renderTaskRatioChart(metrics) {
-    const container = document.getElementById('chart-task-ratio-container');
-    if (!container) return;
-
-    const completed = metrics.completedCount || 3;
-    const pending = metrics.pendingCount || 2;
-    const delayed = metrics.delayedCount || 1;
-    const total = completed + pending + delayed || 1;
-
-    const pComp = Math.round((completed / total) * 100);
-    const pPend = Math.round((pending / total) * 100);
-    const pDel = Math.round((delayed / total) * 100);
-
-    container.innerHTML = `
-      <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
-        <line x1="0" y1="30" x2="400" y2="30" stroke="#232C36" stroke-dasharray="3,3" />
-        <line x1="0" y1="70" x2="400" y2="70" stroke="#232C36" stroke-dasharray="3,3" />
-
-        <rect x="40" y="${100 - pComp}" width="70" height="${pComp}" rx="4" fill="#00E676" />
-        <text x="75" y="${90 - pComp}" fill="#00E676" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${completed} (${pComp}%)</text>
-        <text x="75" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Concluídas</text>
-
-        <rect x="165" y="${100 - pPend}" width="70" height="${pPend}" rx="4" fill="#88C0D0" />
-        <text x="200" y="${90 - pPend}" fill="#88C0D0" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${pending} (${pPend}%)</text>
-        <text x="200" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Pendentes</text>
-
-        <rect x="290" y="${100 - pDel}" width="70" height="${pDel}" rx="4" fill="#FF9100" />
-        <text x="325" y="${90 - pDel}" fill="#FF9100" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${delayed} (${pDel}%)</text>
-        <text x="325" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Atrasadas</text>
-      </svg>
-    `;
-  }
-
-  function renderDeepWorkComparativeChart() {
-    const container = document.getElementById('chart-deepwork-container');
-    if (!container) return;
-
-    const dh = appState.kpis.focusScore.deepWorkHistory || { today: 6.8, yesterday: 5.2, weeklyAvg7Days: 6.1, monthlyAvg: 5.8 };
-    const maxVal = 10.0;
-
-    const hToday = Math.round((dh.today / maxVal) * 80);
-    const hWeekly = Math.round((dh.weeklyAvg7Days / maxVal) * 80);
-    const hMonthly = Math.round((dh.monthlyAvg / maxVal) * 80);
-
-    container.innerHTML = `
-      <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
-        <line x1="0" y1="36" x2="400" y2="36" stroke="#5E81AC" stroke-width="1.5" stroke-dasharray="4,4" />
-        <text x="395" y="32" fill="#5E81AC" font-size="10" font-family="JetBrains Mono" text-anchor="end">Target: 8.0h</text>
-
-        <rect x="40" y="${100 - hToday}" width="70" height="${hToday}" rx="4" fill="#00E676" />
-        <text x="75" y="${90 - hToday}" fill="#00E676" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${dh.today}h</text>
-        <text x="75" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Diário (Hoje)</text>
-
-        <rect x="165" y="${100 - hWeekly}" width="70" height="${hWeekly}" rx="4" fill="#88C0D0" />
-        <text x="200" y="${90 - hWeekly}" fill="#88C0D0" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${dh.weeklyAvg7Days}h</text>
-        <text x="200" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Média 7d</text>
-
-        <rect x="290" y="${100 - hMonthly}" width="70" height="${hMonthly}" rx="4" fill="#5E81AC" />
-        <text x="325" y="${90 - hMonthly}" fill="#5E81AC" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${dh.monthlyAvg}h</text>
-        <text x="325" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Média Mensal</text>
-      </svg>
-    `;
-  }
-
-  /* --------------------------------------------------------------------------
      LIVE CLOCK & UTILS
      -------------------------------------------------------------------------- */
   function setupLiveClock() {
@@ -640,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     PROFILE & KPIS RENDER (WITH DUAL-LINE RED DISCREPANCY & % ABOVE TARGET)
+     PROFILE & KPIS RENDER (WITH FINANCES METRIC & TAG RANKING ENGINE)
      -------------------------------------------------------------------------- */
   function renderUserProfile() {
     const avatarEl = document.getElementById('user-avatar');
@@ -678,7 +601,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pctAbove = (((bmi - idealTargetBmi) / idealTargetBmi) * 100).toFixed(1);
     const isAbove = bmi > idealTargetBmi;
 
-    const currentColor = isAbove ? '#FF5252' : '#88C0D0'; // Red if above target!
+    const currentColor = isAbove ? '#FF5252' : '#88C0D0';
 
     const card1Line = document.getElementById('card1-imc-current-line');
     const card1Dot = document.getElementById('imc-current-legend-dot');
@@ -738,10 +661,15 @@ document.addEventListener('DOMContentLoaded', () => {
       cardHabitsCounter.textContent = `${hMetrics.completedHabits}/3 Hábitos Concluídos`;
     }
 
+    const finMetrics = calculateFinancesMetrics();
     const finValEl = document.getElementById('finances-val');
     const finTrendEl = document.getElementById('finances-trend');
-    if (finValEl) finValEl.textContent = appState.kpis.financesMetric.value || '$14,250';
-    if (finTrendEl) finTrendEl.textContent = `${appState.kpis.financesMetric.trend} ↑`;
+
+    if (finValEl) finValEl.textContent = `$${finMetrics.monthlyNet.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    if (finTrendEl) {
+      finTrendEl.textContent = finMetrics.monthlyNet >= 0 ? `+$${finMetrics.monthlyNet.toLocaleString()} ↑` : `-$${Math.abs(finMetrics.monthlyNet).toLocaleString()} ↓`;
+      finTrendEl.className = finMetrics.monthlyNet >= 0 ? 'trend-badge trend-up' : 'trend-badge badge-critical';
+    }
 
     const learnValEl = document.getElementById('learning-val');
     const learnFillEl = document.getElementById('learning-bar-fill');
@@ -752,6 +680,85 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderFocusModalData(metrics);
     renderHealthModalData(hMetrics);
+    renderFinancesModalData(finMetrics);
+  }
+
+  function renderFinancesModalData(finMetrics) {
+    const dailyValEl = document.getElementById('balance-daily-val');
+    const dailySubEl = document.getElementById('balance-daily-sub');
+    const weeklyValEl = document.getElementById('balance-weekly-val');
+    const weeklySubEl = document.getElementById('balance-weekly-sub');
+    const monthlyValEl = document.getElementById('balance-monthly-val');
+    const monthlySubEl = document.getElementById('balance-monthly-sub');
+
+    if (dailyValEl) {
+      dailyValEl.textContent = `${finMetrics.dailyNet >= 0 ? '+' : '-'}$${Math.abs(finMetrics.dailyNet).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      dailyValEl.className = finMetrics.dailyNet >= 0 ? 'balance-val text-green' : 'balance-val highlight-red';
+    }
+    if (dailySubEl) dailySubEl.textContent = `Entradas: $${finMetrics.dailyIn.toLocaleString()} | Saídas: $${finMetrics.dailyOut.toLocaleString()}`;
+
+    if (weeklyValEl) {
+      weeklyValEl.textContent = `${finMetrics.weeklyNet >= 0 ? '+' : '-'}$${Math.abs(finMetrics.weeklyNet).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      weeklyValEl.className = finMetrics.weeklyNet >= 0 ? 'balance-val text-green' : 'balance-val highlight-red';
+    }
+    if (weeklySubEl) weeklySubEl.textContent = `Entradas: $${finMetrics.weeklyIn.toLocaleString()} | Saídas: $${finMetrics.weeklyOut.toLocaleString()}`;
+
+    if (monthlyValEl) {
+      monthlyValEl.textContent = `${finMetrics.monthlyNet >= 0 ? '+' : '-'}$${Math.abs(finMetrics.monthlyNet).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      monthlyValEl.className = finMetrics.monthlyNet >= 0 ? 'balance-val text-green' : 'balance-val highlight-red';
+    }
+    if (monthlySubEl) monthlySubEl.textContent = `Total Entradas: $${finMetrics.totalIn.toLocaleString()} | Total Saídas: $${finMetrics.totalOut.toLocaleString()}`;
+
+    const totalIncomeLabel = document.getElementById('tag-total-income-label');
+    if (totalIncomeLabel) totalIncomeLabel.textContent = `Total Entradas (Orçamento Base): $${finMetrics.totalIn.toLocaleString()}`;
+
+    // Render Ordem de Gastos por Tags
+    const tagListEl = document.getElementById('tag-ranking-list');
+    if (tagListEl) {
+      tagListEl.innerHTML = '';
+      if (finMetrics.rankedTags.length === 0) {
+        tagListEl.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; font-family: JetBrains Mono;">Nenhum gasto lançado até o momento.</div>`;
+      } else {
+        finMetrics.rankedTags.forEach(t => {
+          const item = document.createElement('div');
+          item.className = 'tag-rank-item';
+          item.innerHTML = `
+            <div class="tag-rank-info">
+              <span class="tag-rank-name">${escapeHtml(t.tag)}</span>
+              <span class="tag-rank-val">$${t.spend.toLocaleString('en-US', { minimumFractionDigits: 2 })} (${t.pctOfBudget}% do Orçamento)</span>
+            </div>
+            <div class="tag-rank-bar-bg">
+              <div class="tag-rank-bar-fill" style="width: ${Math.min(100, t.pctOfBudget)}%;"></div>
+            </div>
+          `;
+          tagListEl.appendChild(item);
+        });
+      }
+    }
+
+    // Render Histórico Recente de Transações
+    const txBodyEl = document.getElementById('tx-history-body');
+    const txCountLabel = document.getElementById('tx-count-label');
+
+    if (txCountLabel) txCountLabel.textContent = `${finMetrics.transactions.length} lançamentos`;
+
+    if (txBodyEl) {
+      txBodyEl.innerHTML = '';
+      finMetrics.transactions.slice().reverse().forEach(tx => {
+        const tr = document.createElement('tr');
+        const isEntrada = tx.type === 'entrada';
+        tr.innerHTML = `
+          <td><span class="${isEntrada ? 'tx-type-badge-in' : 'tx-type-badge-out'}">${isEntrada ? 'ENTRADA' : 'SAÍDA'}</span></td>
+          <td style="font-family: JetBrains Mono;">${formatDatePt(tx.date)}</td>
+          <td>${escapeHtml(tx.description)}</td>
+          <td style="font-family: JetBrains Mono; color: var(--accent-cyan);">${escapeHtml(tx.tag)}</td>
+          <td style="font-family: JetBrains Mono; font-weight: 700;" class="${isEntrada ? 'text-green' : 'highlight-red'}">
+            ${isEntrada ? '+' : '-'}$${parseFloat(tx.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </td>
+        `;
+        txBodyEl.appendChild(tr);
+      });
+    }
   }
 
   function renderFocusModalData(metrics) {
@@ -764,9 +771,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cPend) cPend.textContent = `${metrics.pendingCount} tarefas`;
     if (cDel) cDel.textContent = `${metrics.delayedCount} (Penalidade 1.5x)`;
     if (cDw) cDw.textContent = `${metrics.accumulatedHours} / ${metrics.targetHours} hrs`;
-
-    renderTaskRatioChart(metrics);
-    renderDeepWorkComparativeChart();
   }
 
   function renderHealthModalData(hMetrics) {
@@ -792,43 +796,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     renderImcDualLineIndicators(hMetrics.bmi);
-
-    const sleepInput = document.getElementById('health-sleep-hours');
-    const sleepDiffInput = document.getElementById('health-sleep-diff');
-    const sleepPill = document.getElementById('sleep-status-pill');
-
-    if (sleepInput) sleepInput.value = hMetrics.sleepHours;
-    if (sleepDiffInput) sleepDiffInput.value = hMetrics.sleepDiff;
-    if (sleepPill) {
-      sleepPill.textContent = hMetrics.isSleepHealthy ? `Meta Alcançada (${hMetrics.sleepDiff})` : `Abaixo da Meta (${hMetrics.sleepDiff})`;
-      sleepPill.className = hMetrics.isSleepHealthy ? 'habit-status-pill text-green' : 'habit-status-pill text-orange';
-    }
-
-    const exTimeInput = document.getElementById('health-exercise-time');
-    const exDurInput = document.getElementById('health-exercise-duration');
-    const exPill = document.getElementById('exercise-status-pill');
-
-    if (exTimeInput) exTimeInput.value = hMetrics.exerciseTime;
-    if (exDurInput) exDurInput.value = hMetrics.exerciseDuration;
-    if (exPill) {
-      exPill.textContent = `${hMetrics.exerciseType} (${hMetrics.exerciseDuration} min às ${hMetrics.exerciseTime})`;
-    }
-
-    const intakeInput = document.getElementById('health-calorie-intake');
-    const expenditureInput = document.getElementById('health-calorie-expenditure');
-    const netInput = document.getElementById('health-calorie-net');
-    const calPill = document.getElementById('calorie-status-pill');
-
-    if (intakeInput) intakeInput.value = hMetrics.intakeKcal;
-    if (expenditureInput) expenditureInput.value = hMetrics.expenditureKcal;
-    if (netInput) netInput.value = `${hMetrics.netKcal} kcal (${hMetrics.netKcal < 0 ? 'Déficit' : 'Superávit'})`;
-    if (calPill) {
-      calPill.textContent = hMetrics.isCaloriePositive ? `Balanço Positivo (${hMetrics.netKcal} kcal)` : `Balanço Fora do Alvo (${hMetrics.netKcal} kcal)`;
-      calPill.className = hMetrics.isCaloriePositive ? 'habit-status-pill text-green' : 'habit-status-pill text-orange';
-    }
-
-    renderHabitsFulfillmentChart(hMetrics);
-    renderHabitsVarianceChart(hMetrics);
   }
 
   /* --------------------------------------------------------------------------
@@ -889,9 +856,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="impact-thesis">${escapeHtml(proj.impactThesis)}</p>
 
         <div class="visual-metric-wrapper">
-          <div class="segmented-bar">
-            ${segmentedBarHtml}
-          </div>
+          <div class="segmented-bar">${segmentedBarHtml}</div>
         </div>
 
         <div class="next-milestone-box">
@@ -1060,7 +1025,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     CENTERED MODAL OVERLAYS (PROFILE, FOCUS, HEALTH MODALS)
+     CENTERED MODAL OVERLAYS (PROFILE, FOCUS, HEALTH, FINANCES MODALS)
      -------------------------------------------------------------------------- */
   function openProfileModal() {
     const backdrop = document.getElementById('profile-modal-backdrop');
@@ -1087,7 +1052,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function openFocusModal() {
     const backdrop = document.getElementById('focus-modal-backdrop');
     if (!backdrop) return;
-
     renderKPIs();
     backdrop.classList.add('active');
   }
@@ -1100,13 +1064,29 @@ document.addEventListener('DOMContentLoaded', () => {
   function openHealthModal() {
     const backdrop = document.getElementById('health-modal-backdrop');
     if (!backdrop) return;
-
     renderKPIs();
     backdrop.classList.add('active');
   }
 
   function closeHealthModal() {
     const backdrop = document.getElementById('health-modal-backdrop');
+    if (backdrop) backdrop.classList.remove('active');
+  }
+
+  function openFinancesModal() {
+    const backdrop = document.getElementById('finances-modal-backdrop');
+    if (!backdrop) return;
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const dateInput = document.getElementById('tx-date');
+    if (dateInput) dateInput.value = todayStr;
+
+    renderKPIs();
+    backdrop.classList.add('active');
+  }
+
+  function closeFinancesModal() {
+    const backdrop = document.getElementById('finances-modal-backdrop');
     if (backdrop) backdrop.classList.remove('active');
   }
 
@@ -1140,86 +1120,72 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Exercise type switcher
-    const exCardioBtn = document.getElementById('btn-ex-cardio');
-    const exMusculacaoBtn = document.getElementById('btn-ex-musculacao');
+    // Finances Metric Card click & modal controls
+    const financesCard = document.getElementById('finances-metric-card');
+    const financesModalBackdrop = document.getElementById('finances-modal-backdrop');
+    const financesModalClose = document.getElementById('finances-modal-close');
 
-    if (exCardioBtn && exMusculacaoBtn) {
-      exCardioBtn.addEventListener('click', () => {
-        exCardioBtn.classList.add('active');
-        exMusculacaoBtn.classList.remove('active');
-        appState.kpis.healthMetric.exercise.type = 'Cardio';
-      });
-      exMusculacaoBtn.addEventListener('click', () => {
-        exMusculacaoBtn.classList.add('active');
-        exCardioBtn.classList.remove('active');
-        appState.kpis.healthMetric.exercise.type = 'Musculação';
+    if (financesCard) financesCard.addEventListener('click', openFinancesModal);
+    if (financesModalClose) financesModalClose.addEventListener('click', closeFinancesModal);
+    if (financesModalBackdrop) {
+      financesModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === financesModalBackdrop) closeFinancesModal();
       });
     }
 
-    // Real-time calculation on Health Habits Form
-    const sleepInput = document.getElementById('health-sleep-hours');
-    const sleepDiffInput = document.getElementById('health-sleep-diff');
-    if (sleepInput && sleepDiffInput) {
-      sleepInput.addEventListener('input', () => {
-        const val = parseFloat(sleepInput.value) || 7.5;
-        const diff = val - 7.5;
-        sleepDiffInput.value = diff > 0 ? `+${diff.toFixed(1)} hrs` : `${diff.toFixed(1)} hrs`;
+    // Transaction Type Switcher (Entrada vs Saída)
+    const btnTxEntrada = document.getElementById('btn-tx-entrada');
+    const btnTxSaida = document.getElementById('btn-tx-saida');
+
+    if (btnTxEntrada && btnTxSaida) {
+      btnTxEntrada.addEventListener('click', () => {
+        btnTxEntrada.classList.add('active');
+        btnTxSaida.classList.remove('active');
+        appState.currentTxType = 'entrada';
+      });
+      btnTxSaida.addEventListener('click', () => {
+        btnTxSaida.classList.add('active');
+        btnTxEntrada.classList.remove('active');
+        appState.currentTxType = 'saida';
       });
     }
 
-    const intakeInput = document.getElementById('health-calorie-intake');
-    const expenditureInput = document.getElementById('health-calorie-expenditure');
-    const netInput = document.getElementById('health-calorie-net');
-
-    function updateCalorieNet() {
-      const intake = parseInt(intakeInput.value) || 0;
-      const expenditure = parseInt(expenditureInput.value) || 0;
-      const net = intake - expenditure;
-      netInput.value = `${net} kcal (${net < 0 ? 'Déficit' : 'Superávit'})`;
-    }
-
-    if (intakeInput) intakeInput.addEventListener('input', updateCalorieNet);
-    if (expenditureInput) expenditureInput.addEventListener('input', updateCalorieNet);
-
-    // Health Form Submit
-    const healthForm = document.getElementById('health-habits-form');
-    if (healthForm) {
-      healthForm.addEventListener('submit', (e) => {
+    // Transaction Form Submit
+    const financesForm = document.getElementById('finances-transaction-form');
+    if (financesForm) {
+      financesForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
+        const val = parseFloat(document.getElementById('tx-value').value) || 0;
+        const date = document.getElementById('tx-date').value;
+        const description = document.getElementById('tx-description').value.trim();
+        let tag = document.getElementById('tx-tag').value.trim();
+
+        if (!tag.startsWith('#')) tag = `#${tag}`;
+
+        const newTx = {
+          id: `tx-${Date.now()}`,
+          type: appState.currentTxType || 'entrada',
+          value: val,
+          date: date,
+          description: description,
+          tag: tag
+        };
+
         updateState(s => {
-          s.kpis.healthMetric.sleep.hours = parseFloat(document.getElementById('health-sleep-hours').value) || 7.5;
-          s.kpis.healthMetric.exercise.time = document.getElementById('health-exercise-time').value.trim();
-          s.kpis.healthMetric.exercise.durationMinutes = parseInt(document.getElementById('health-exercise-duration').value) || 45;
-          
-          const intake = parseInt(document.getElementById('health-calorie-intake').value) || 2100;
-          const expenditure = parseInt(document.getElementById('health-calorie-expenditure').value) || 2450;
-          s.kpis.healthMetric.caloricBalance.intakeKcal = intake;
-          s.kpis.healthMetric.caloricBalance.expenditureKcal = expenditure;
-          s.kpis.healthMetric.caloricBalance.netKcal = intake - expenditure;
+          if (!s.kpis.financesMetric.transactions) s.kpis.financesMetric.transactions = [];
+          s.kpis.financesMetric.transactions.push(newTx);
         });
 
+        // Reset form inputs
+        document.getElementById('tx-value').value = '';
+        document.getElementById('tx-description').value = '';
+        document.getElementById('tx-tag').value = '';
+
         renderKPIs();
-        closeHealthModal();
+        alert(`Transação de $${val.toFixed(2)} (${newTx.type.toUpperCase()}) registrada com sucesso!`);
       });
     }
-
-    // Task Timer controls
-    const timerModeBtns = document.querySelectorAll('.timer-mode-btn');
-    timerModeBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        setTimerMode(e.target.dataset.mode);
-      });
-    });
-
-    const timerStartBtn = document.getElementById('timer-btn-start');
-    const timerPauseBtn = document.getElementById('timer-btn-pause');
-    const timerResetBtn = document.getElementById('timer-btn-reset');
-
-    if (timerStartBtn) timerStartBtn.addEventListener('click', startTimer);
-    if (timerPauseBtn) timerPauseBtn.addEventListener('click', pauseTimer);
-    if (timerResetBtn) timerResetBtn.addEventListener('click', resetTimer);
 
     // Backup Actions
     const btnDownload = document.getElementById('btn-download-backup');
@@ -1259,11 +1225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const profileModalCancel = document.getElementById('profile-modal-cancel');
     const profileEditForm = document.getElementById('profile-edit-form');
 
-    if (profileCard) {
-      profileCard.addEventListener('click', () => {
-        openProfileModal();
-      });
-    }
+    if (profileCard) profileCard.addEventListener('click', openProfileModal);
     if (profileEditBtn) {
       profileEditBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1388,6 +1350,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeProfileModal();
         closeFocusModal();
         closeHealthModal();
+        closeFinancesModal();
       }
     });
 
