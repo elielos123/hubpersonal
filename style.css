@@ -24,13 +24,13 @@
   --text-inverse: #11161B;
 
   /* Accents & Semiotics */
-  --accent-green: #00E676;     /* On Track */
+  --accent-green: #00E676;     /* On Track / Meta Desejável */
   --accent-green-bg: rgba(0, 230, 118, 0.12);
   --accent-orange: #FF9100;    /* Delayed */
   --accent-orange-bg: rgba(255, 145, 0, 0.12);
-  --accent-red: #FF5252;       /* Critical */
+  --accent-red: #FF5252;       /* Critical / Incorreto / Alerta */
   --accent-red-bg: rgba(255, 82, 82, 0.12);
-  --accent-cyan: #88C0D0;
+  --accent-cyan: #88C0D0;     /* Nível Correto (Azul) */
   --accent-blue: #5E81AC;
 
   /* Fonts */
@@ -382,6 +382,47 @@ button, input {
   padding: 2px 8px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(0, 230, 118, 0.3);
+}
+
+/* DUAL LINE IMC INDICATOR STYLES */
+.imc-dual-line-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-card);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.imc-line-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-secondary);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+}
+.legend-dot.green { background: var(--accent-green); }
+.legend-dot.blue { background: var(--accent-cyan); }
+.legend-dot.red { background: var(--accent-red); }
+
+.imc-lines-svg {
+  width: 100%;
+  height: 24px;
 }
 
 /* Backup & Sync Action Bar */
@@ -783,17 +824,17 @@ button, input {
 .badge-delayed { background-color: var(--accent-orange-bg); color: var(--accent-orange); border: 1px solid rgba(255, 145, 0, 0.3); }
 .badge-critical { background-color: var(--accent-red-bg); color: var(--accent-red); border: 1px solid rgba(255, 82, 82, 0.3); }
 
-/* IMC Health Badges */
-.badge-imc-green {
-  background-color: var(--accent-green-bg);
-  color: var(--accent-green);
-  border: 1px solid rgba(0, 230, 118, 0.3);
+/* IMC Health Badges (Blue for Correct Level, Red for Above/Below Alert) */
+.badge-imc-blue {
+  background-color: rgba(136, 192, 208, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(136, 192, 208, 0.4);
 }
 
 .badge-imc-red {
   background-color: var(--accent-red-bg);
   color: var(--accent-red);
-  border: 1px solid rgba(255, 82, 82, 0.3);
+  border: 1px solid rgba(255, 82, 82, 0.4);
 }
 
 .impact-thesis {
