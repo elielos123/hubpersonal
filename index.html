@@ -48,14 +48,51 @@
     <!-- COLUMN 1: Vital Status & Navigation -->
     <aside class="col-vital" id="col-vital">
       
-      <!-- Profile Header -->
-      <div class="card profile-card">
-        <div class="profile-avatar" id="user-avatar">ET</div>
-        <div class="profile-info">
-          <h2 class="user-name" id="user-name">Eliel Tavares</h2>
-          <div class="user-status">
-            <span class="dot-online"></span>
-            <span class="user-role" id="user-role">Systems Architect</span>
+      <!-- Profile Header Card (Clickable to Edit) -->
+      <div class="card profile-card clickable-card" id="profile-card" title="Clique para editar perfil e biometria">
+        <div class="profile-card-top">
+          <div class="profile-avatar" id="user-avatar">ET</div>
+          <div class="profile-info">
+            <h2 class="user-name" id="user-name">Eliel Tavares</h2>
+            <div class="user-status">
+              <span class="dot-online"></span>
+              <span class="user-role" id="user-role">Systems Architect</span>
+            </div>
+          </div>
+          <button class="profile-edit-icon" id="profile-edit-btn" title="Editar Perfil" aria-label="Editar Perfil">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          </button>
+        </div>
+
+        <!-- Biometrics & Commitment Summary Grid -->
+        <div class="profile-biometrics-summary">
+          <div class="bio-row">
+            <span class="bio-label">NASCIMENTO / IDADE</span>
+            <span class="bio-value-mono" id="user-birth-age">15/08/1994 (31 anos)</span>
+          </div>
+          <div class="bio-grid">
+            <div class="bio-item">
+              <span class="bio-label">PESO</span>
+              <span class="bio-value-mono" id="user-weight">78.5 kg</span>
+            </div>
+            <div class="bio-item">
+              <span class="bio-label">ALTURA</span>
+              <span class="bio-value-mono" id="user-height">1.78 m</span>
+            </div>
+          </div>
+          <div class="bio-grid">
+            <div class="bio-item">
+              <span class="bio-label">IMC ATUAL</span>
+              <span class="bio-value-mono highlight-cyan" id="user-current-bmi">24.8</span>
+            </div>
+            <div class="bio-item">
+              <span class="bio-label">IMC SAUDÁVEL</span>
+              <span class="bio-value-mono text-muted" id="user-healthy-bmi">18.5 - 24.9</span>
+            </div>
+          </div>
+          <div class="bio-row commitment-row">
+            <span class="bio-label">COMPROMETIMENTO</span>
+            <span class="commitment-badge" id="user-commitment">ALTO (94%)</span>
           </div>
         </div>
       </div>
@@ -338,6 +375,70 @@
       </div>
     </div>
   </aside>
+
+  <!-- Centered Modal Overlay Standard (Profile & Biometrics Edit Modal) -->
+  <div class="modal-backdrop" id="profile-modal-backdrop">
+    <div class="modal-container" role="dialog" aria-labelledby="modal-title-profile" aria-modal="true">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-subtitle">COLUNA 1 // CARD 1</span>
+          <h2 class="modal-title" id="modal-title-profile">Editar Perfil & Biometria</h2>
+        </div>
+        <button class="modal-close-btn" id="profile-modal-close" aria-label="Fechar janela">&times;</button>
+      </div>
+
+      <form id="profile-edit-form" class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="edit-user-name">Nome do Usuário</label>
+            <input type="text" id="edit-user-name" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit-user-role">Cargo / Descrição</label>
+            <input type="text" id="edit-user-role" class="form-input" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-user-birth">Data de Nascimento (Critério Idade/IMC)</label>
+          <input type="date" id="edit-user-birth" class="form-input" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="edit-user-weight">Peso (kg)</label>
+            <input type="number" step="0.1" id="edit-user-weight" class="form-input" placeholder="ex: 78.5" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit-user-height">Altura (m)</label>
+            <input type="number" step="0.01" id="edit-user-height" class="form-input" placeholder="ex: 1.78" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="edit-user-current-bmi">IMC Atual (Editável)</label>
+            <input type="number" step="0.1" id="edit-user-current-bmi" class="form-input" placeholder="ex: 24.8" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit-user-healthy-bmi">IMC Saudável (Referência Fica)</label>
+            <input type="text" id="edit-user-healthy-bmi" class="form-input readonly-input" value="18.5 - 24.9" readonly />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-user-commitment">Status de Comprometimento</label>
+          <input type="text" id="edit-user-commitment" class="form-input" placeholder="ex: ALTO (94%)" required />
+          <span class="form-hint">Ponto de referência a ser integrado com outras janelas posteriormente.</span>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="profile-modal-cancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- JavaScript App Logic -->
   <script src="app.js"></script>
