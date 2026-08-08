@@ -1,7 +1,7 @@
 /* ==========================================================================
    PERSONAL DASHBOARD COMMAND CENTER - JAVASCRIPT ENGINE
-   Persistence: LocalStorage + Vercel Serverless Sync API + GitHub Auto Commit
-   Timestamp Guard: Client > Cloud over-writes; Cloud > Client pulls cloud.
+   Features: 3-Layer Persistence, Timestamp Guard, Task Timer (Cronômetro/Regressivo/Pomodoro),
+   Focus Score 4-Criteria Engine, and 2 Comparative SVG Charts.
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Default Global Application State
   let appState = {
-    lastUpdated: "2026-08-08T01:19:24.000Z",
+    lastUpdated: "2026-08-08T01:31:10.000Z",
     user: {
       name: "Eliel Tavares",
       role: "Lead Architect & Systems Engineer",
@@ -25,10 +25,30 @@ document.addEventListener('DOMContentLoaded', () => {
       commitmentStatus: "ALTO (94%)"
     },
     kpis: {
-      focusScore: { value: 85, label: "Focus Score", target: "85%" },
+      focusScore: {
+        value: 85,
+        label: "Focus Score",
+        target: "85%",
+        deepWork: {
+          accumulatedSeconds: 24480, // 6.8 hours
+          targetHours: 8.0
+        },
+        deepWorkHistory: {
+          today: 6.8,
+          yesterday: 5.2,
+          weeklyAvg7Days: 6.1,
+          monthlyAvg: 5.8
+        }
+      },
       healthMetric: { value: 92, label: "Health Index", history: [65, 70, 72, 78, 80, 82, 85, 84, 88, 90, 89, 92] },
       financesMetric: { value: "$14,250", trend: "+12.4%", label: "Monthly Cashflow", isPositive: true },
       learningMetric: { value: 68, label: "Quarterly Target", details: "34 / 50 Hours Completed" }
+    },
+    timerState: {
+      mode: 'pomodoro', // 'cronometro', 'regressivo', 'pomodoro'
+      seconds: 1500,     // 25 mins
+      initialSeconds: 1500,
+      isRunning: false
     },
     pipeline: { ideation: 2, construction: 4, validation: 1, completed: 8 },
     projects: [
@@ -103,7 +123,9 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedProjectId: null
   };
 
-  // 1. Check LocalStorage first
+  let timerInterval = null;
+
+  // Check LocalStorage cache
   const localSaved = localStorage.getItem(STORAGE_KEY);
   if (localSaved) {
     try {
@@ -116,10 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 2. Initial Setup
   initApp();
-
-  // 3. Trigger initial cloud sync check
   syncWithCloud();
 
   function initApp() {
@@ -130,6 +149,58 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPipelineFooter();
     renderDeliveryStream();
     setupEventListeners();
+    updateTimerDisplay();
+  }
+
+  /* --------------------------------------------------------------------------
+     FOCUS SCORE & 4 CRITERIA CALCULATION ENGINE
+     -------------------------------------------------------------------------- */
+  function calculateFocusScore() {
+    let completedCount = 0;
+    let pendingCount = 0;
+    let delayedCount = 0;
+
+    // Scan timeline tasks
+    appState.timeline.forEach(item => {
+      if (item.completed) {
+        completedCount++;
+      } else if (item.status === 'DELAYED') {
+        delayedCount++;
+      } else {
+        pendingCount++;
+      }
+    });
+
+    // Scan project milestones
+    appState.projects.forEach(proj => {
+      if (proj.status === 'DELAYED') {
+        delayedCount += 0.5;
+      }
+    });
+
+    // Deep Work Ratio (accumulated hours / target hours)
+    const dw = appState.kpis.focusScore.deepWork || { accumulatedSeconds: 24480, targetHours: 8.0 };
+    const accumulatedHours = (dw.accumulatedSeconds / 3600);
+    appState.kpis.focusScore.deepWorkHistory.today = parseFloat(accumulatedHours.toFixed(1));
+
+    const dwRatio = Math.min(1.0, accumulatedHours / dw.targetHours);
+
+    // Formula: Task Completion ratio weighted by 60% + Deep Work ratio 40% - Delayed penalty
+    const totalTasks = (completedCount + pendingCount + (delayedCount * 1.5)) || 1;
+    const taskRatio = (completedCount / totalTasks);
+    
+    let score = Math.round((taskRatio * 60) + (dwRatio * 40));
+    score = Math.max(10, Math.min(99, score)); // Clamp between 10% and 99%
+
+    appState.kpis.focusScore.value = score;
+    return {
+      score,
+      completedCount,
+      pendingCount,
+      delayedCount: Math.ceil(delayedCount),
+      accumulatedHours: accumulatedHours.toFixed(1),
+      targetHours: dw.targetHours
+    };
   }
 
   /* --------------------------------------------------------------------------
@@ -150,7 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSyncBadge('syncing', 'Conectando nuvem...');
 
     try {
-      // First attempt: Vercel Serverless Function /api/sync
       const res = await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -163,7 +233,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.ok) {
         const data = await res.json();
         if (data.action === 'pulled_cloud_to_client' && data.cloudState) {
-          // Cloud was newer! Update client state from cloud
           appState = Object.assign({}, appState, data.cloudState);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
           renderAll();
@@ -174,7 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
     } catch (e) {
-      // Fallback for local development or static hosting: direct GitHub REST API sync
       await fallbackGitHubSync();
     }
   }
@@ -197,7 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const clientTime = new Date(appState.lastUpdated || '1970-01-01').getTime();
 
       if (cloudTime > clientTime) {
-        // Cloud is newer: Pull cloud data into client
         appState = Object.assign({}, appState, cloudState);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
         renderAll();
@@ -206,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSyncBadge('synced', `💾 Salvo no Navegador`);
       }
     } catch (err) {
-      console.log('Sync fallback notice:', err.message);
       updateSyncBadge('synced', `💾 Salvo no Navegador`);
     }
   }
@@ -273,6 +339,164 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     reader.readAsText(file);
+  }
+
+  /* --------------------------------------------------------------------------
+     TASK TIMER ENGINE (RELÓGIO DE TAREFA: CRONÔMETRO, REGRESSIVO, POMODORO)
+     -------------------------------------------------------------------------- */
+  function setTimerMode(mode) {
+    appState.timerState.mode = mode;
+    pauseTimer();
+
+    if (mode === 'cronometro') {
+      appState.timerState.seconds = 0;
+      appState.timerState.initialSeconds = 0;
+    } else if (mode === 'regressivo') {
+      appState.timerState.seconds = 2700; // 45 mins
+      appState.timerState.initialSeconds = 2700;
+    } else if (mode === 'pomodoro') {
+      appState.timerState.seconds = 1500; // 25 mins
+      appState.timerState.initialSeconds = 1500;
+    }
+
+    updateTimerDisplay();
+
+    // Update active button state
+    document.querySelectorAll('.timer-mode-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+  }
+
+  function startTimer() {
+    if (appState.timerState.isRunning) return;
+    appState.timerState.isRunning = true;
+
+    const startBtn = document.getElementById('timer-btn-start');
+    if (startBtn) startBtn.textContent = '▶ Em Execução...';
+
+    timerInterval = setInterval(() => {
+      if (appState.timerState.mode === 'cronometro') {
+        appState.timerState.seconds++;
+      } else {
+        if (appState.timerState.seconds > 0) {
+          appState.timerState.seconds--;
+        } else {
+          pauseTimer();
+          alert('Tempo de Foco concluído!');
+        }
+      }
+
+      // Add to accumulated Deep Work time
+      appState.kpis.focusScore.deepWork.accumulatedSeconds++;
+      
+      updateTimerDisplay();
+      renderKPIs();
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    appState.timerState.isRunning = false;
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    const startBtn = document.getElementById('timer-btn-start');
+    if (startBtn) startBtn.textContent = '▶ Iniciar Focus';
+
+    // Persist Deep Work progress
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+  }
+
+  function resetTimer() {
+    pauseTimer();
+    setTimerMode(appState.timerState.mode);
+  }
+
+  function updateTimerDisplay() {
+    const displayEl = document.getElementById('timer-display-val');
+    if (!displayEl) return;
+
+    const sec = appState.timerState.seconds;
+    const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+    const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+
+    displayEl.textContent = `${h}:${m}:${s}`;
+  }
+
+  /* --------------------------------------------------------------------------
+     2 COMPARATIVE VISUAL SVG CHARTS RENDERER
+     -------------------------------------------------------------------------- */
+  function renderTaskRatioChart(metrics) {
+    const container = document.getElementById('chart-task-ratio-container');
+    if (!container) return;
+
+    const completed = metrics.completedCount || 3;
+    const pending = metrics.pendingCount || 2;
+    const delayed = metrics.delayedCount || 1;
+    const total = completed + pending + delayed || 1;
+
+    const pComp = Math.round((completed / total) * 100);
+    const pPend = Math.round((pending / total) * 100);
+    const pDel = Math.round((delayed / total) * 100);
+
+    container.innerHTML = `
+      <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
+        <!-- Background Grid Lines -->
+        <line x1="0" y1="30" x2="400" y2="30" stroke="#232C36" stroke-dasharray="3,3" />
+        <line x1="0" y1="70" x2="400" y2="70" stroke="#232C36" stroke-dasharray="3,3" />
+
+        <!-- Bar 1: Concluídas -->
+        <rect x="40" y="${100 - pComp}" width="70" height="${pComp}" rx="4" fill="#00E676" />
+        <text x="75" y="${90 - pComp}" fill="#00E676" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${completed} (${pComp}%)</text>
+        <text x="75" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Concluídas</text>
+
+        <!-- Bar 2: Pendentes Atuais -->
+        <rect x="165" y="${100 - pPend}" width="70" height="${pPend}" rx="4" fill="#88C0D0" />
+        <text x="200" y="${90 - pPend}" fill="#88C0D0" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${pending} (${pPend}%)</text>
+        <text x="200" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Pendentes</text>
+
+        <!-- Bar 3: Atrasadas -->
+        <rect x="290" y="${100 - pDel}" width="70" height="${pDel}" rx="4" fill="#FF9100" />
+        <text x="325" y="${90 - pDel}" fill="#FF9100" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${delayed} (${pDel}%)</text>
+        <text x="325" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Atrasadas</text>
+      </svg>
+    `;
+  }
+
+  function renderDeepWorkComparativeChart() {
+    const container = document.getElementById('chart-deepwork-container');
+    if (!container) return;
+
+    const dh = appState.kpis.focusScore.deepWorkHistory || { today: 6.8, yesterday: 5.2, weeklyAvg7Days: 6.1, monthlyAvg: 5.8 };
+    const maxVal = 10.0; // scale up to 10 hours
+
+    const hToday = Math.round((dh.today / maxVal) * 80);
+    const hWeekly = Math.round((dh.weeklyAvg7Days / maxVal) * 80);
+    const hMonthly = Math.round((dh.monthlyAvg / maxVal) * 80);
+
+    container.innerHTML = `
+      <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
+        <!-- Target Line 8.0h -->
+        <line x1="0" y1="36" x2="400" y2="36" stroke="#5E81AC" stroke-width="1.5" stroke-dasharray="4,4" />
+        <text x="395" y="32" fill="#5E81AC" font-size="10" font-family="JetBrains Mono" text-anchor="end">Target: 8.0h</text>
+
+        <!-- Bar 1: Diário (Hoje) -->
+        <rect x="40" y="${100 - hToday}" width="70" height="${hToday}" rx="4" fill="#00E676" />
+        <text x="75" y="${90 - hToday}" fill="#00E676" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${dh.today}h</text>
+        <text x="75" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Diário (Hoje)</text>
+
+        <!-- Bar 2: Média Semanal 7d -->
+        <rect x="165" y="${100 - hWeekly}" width="70" height="${hWeekly}" rx="4" fill="#88C0D0" />
+        <text x="200" y="${90 - hWeekly}" fill="#88C0D0" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${dh.weeklyAvg7Days}h</text>
+        <text x="200" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Média 7d</text>
+
+        <!-- Bar 3: Média Mensal -->
+        <rect x="290" y="${100 - hMonthly}" width="70" height="${hMonthly}" rx="4" fill="#5E81AC" />
+        <text x="325" y="${90 - hMonthly}" fill="#5E81AC" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${dh.monthlyAvg}h</text>
+        <text x="325" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Média Mensal</text>
+      </svg>
+    `;
   }
 
   /* --------------------------------------------------------------------------
@@ -346,20 +570,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderKPIs() {
+    const metrics = calculateFocusScore();
+
     const focusValEl = document.getElementById('focus-score-val');
     const focusFillEl = document.getElementById('focus-ring-fill');
+    const focusDwEl = document.getElementById('focus-deepwork-val');
+    const focusSubEl = document.getElementById('focus-trend-subtext');
+
     if (focusValEl && focusFillEl) {
-      const focusVal = appState.kpis.focusScore.value || 85;
-      focusValEl.textContent = `${focusVal}%`;
+      focusValEl.textContent = `${metrics.score}%`;
       const circumference = 2 * Math.PI * 24;
-      const offset = circumference - (focusVal / 100) * circumference;
+      const offset = circumference - (metrics.score / 100) * circumference;
       focusFillEl.style.strokeDashoffset = offset;
     }
 
+    if (focusDwEl) focusDwEl.textContent = `${metrics.accumulatedHours} / ${metrics.targetHours} hrs`;
+    if (focusSubEl) focusSubEl.textContent = `Média 7d: ${appState.kpis.focusScore.deepWorkHistory.weeklyAvg7Days}h`;
+
     const healthValEl = document.getElementById('health-val');
-    if (healthValEl) {
-      healthValEl.textContent = `${appState.kpis.healthMetric.value || 92}%`;
-    }
+    if (healthValEl) healthValEl.textContent = `${appState.kpis.healthMetric.value || 92}%`;
 
     const finValEl = document.getElementById('finances-val');
     const finTrendEl = document.getElementById('finances-trend');
@@ -372,6 +601,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (learnValEl) learnValEl.textContent = `${appState.kpis.learningMetric.value}%`;
     if (learnFillEl) learnFillEl.style.width = `${appState.kpis.learningMetric.value}%`;
     if (learnDetailsEl) learnDetailsEl.textContent = appState.kpis.learningMetric.details;
+
+    // Render Modal Focus components if open
+    renderFocusModalData(metrics);
+  }
+
+  function renderFocusModalData(metrics) {
+    const cComp = document.getElementById('crit-completed-val');
+    const cPend = document.getElementById('crit-pending-val');
+    const cDel = document.getElementById('crit-delayed-val');
+    const cDw = document.getElementById('crit-deepwork-val');
+
+    if (cComp) cComp.textContent = `${metrics.completedCount} tarefas`;
+    if (cPend) cPend.textContent = `${metrics.pendingCount} tarefas`;
+    if (cDel) cDel.textContent = `${metrics.delayedCount} (Penalidade 1.5x)`;
+    if (cDw) cDw.textContent = `${metrics.accumulatedHours} / ${metrics.targetHours} hrs`;
+
+    renderTaskRatioChart(metrics);
+    renderDeepWorkComparativeChart();
   }
 
   /* --------------------------------------------------------------------------
@@ -519,6 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item.completed = !item.completed;
           });
           renderDeliveryStream();
+          renderKPIs();
         });
 
         ul.appendChild(li);
@@ -577,6 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         openProjectDrawer(projectId);
         renderProjectsStack();
+        renderKPIs();
       });
 
       milestonesListEl.appendChild(li);
@@ -601,7 +850,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     CENTERED MODAL OVERLAY (PROFILE & BIOMETRICS EDIT MODAL)
+     CENTERED MODAL OVERLAYS (PROFILE MODAL & FOCUS SCORE MODAL)
      -------------------------------------------------------------------------- */
   function openProfileModal() {
     const backdrop = document.getElementById('profile-modal-backdrop');
@@ -625,10 +874,52 @@ document.addEventListener('DOMContentLoaded', () => {
     if (backdrop) backdrop.classList.remove('active');
   }
 
+  function openFocusModal() {
+    const backdrop = document.getElementById('focus-modal-backdrop');
+    if (!backdrop) return;
+
+    renderKPIs();
+    backdrop.classList.add('active');
+  }
+
+  function closeFocusModal() {
+    const backdrop = document.getElementById('focus-modal-backdrop');
+    if (backdrop) backdrop.classList.remove('active');
+  }
+
   /* --------------------------------------------------------------------------
      EVENT LISTENERS & INGESTION TERMINAL
      -------------------------------------------------------------------------- */
   function setupEventListeners() {
+    // Focus Score Card click & modal controls
+    const focusCard = document.getElementById('focus-score-card');
+    const focusModalBackdrop = document.getElementById('focus-modal-backdrop');
+    const focusModalClose = document.getElementById('focus-modal-close');
+
+    if (focusCard) focusCard.addEventListener('click', openFocusModal);
+    if (focusModalClose) focusModalClose.addEventListener('click', closeFocusModal);
+    if (focusModalBackdrop) {
+      focusModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === focusModalBackdrop) closeFocusModal();
+      });
+    }
+
+    // Task Timer controls
+    const timerModeBtns = document.querySelectorAll('.timer-mode-btn');
+    timerModeBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        setTimerMode(e.target.dataset.mode);
+      });
+    });
+
+    const timerStartBtn = document.getElementById('timer-btn-start');
+    const timerPauseBtn = document.getElementById('timer-btn-pause');
+    const timerResetBtn = document.getElementById('timer-btn-reset');
+
+    if (timerStartBtn) timerStartBtn.addEventListener('click', startTimer);
+    if (timerPauseBtn) timerPauseBtn.addEventListener('click', pauseTimer);
+    if (timerResetBtn) timerResetBtn.addEventListener('click', resetTimer);
+
     // Backup Actions
     const btnDownload = document.getElementById('btn-download-backup');
     const btnRestore = document.getElementById('btn-restore-backup');
@@ -770,6 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       quickInput.value = '';
       renderDeliveryStream();
+      renderKPIs();
     }
 
     if (submitBtn) submitBtn.addEventListener('click', handleIngest);
@@ -796,6 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Escape') {
         closeProjectDrawer();
         closeProfileModal();
+        closeFocusModal();
       }
     });
 
@@ -830,6 +1123,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           openProjectDrawer(proj.id);
           renderProjectsStack();
+          renderKPIs();
         }
       });
     }
