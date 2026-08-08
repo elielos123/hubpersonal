@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production & Vercel
+.vercel
+.output
+.next/
+dist/
+build/
+
+# Misc
+.DS_Store
+*.pem
+*.log
+.env
+.env.local
