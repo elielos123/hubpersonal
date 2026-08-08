@@ -123,7 +123,7 @@
       <div class="kpi-group">
         <div class="kpi-group-title">VITAL METRICS</div>
 
-        <!-- 1. Focus Score Card (Clickable to open Focus & Timer Modal) -->
+        <!-- 1. Focus Score Card -->
         <div class="card kpi-card clickable-card" id="focus-score-card" title="Clique para abrir análise detalhada do Focus Score & Relógio de Tarefas">
           <div class="kpi-header">
             <span class="kpi-title">Focus Score</span>
@@ -145,18 +145,21 @@
           </div>
         </div>
 
-        <!-- 2. Health Metric -->
-        <div class="card kpi-card">
+        <!-- 2. Health Metric Card (Clickable to open Healthy Habits & Caloric Balance Modal) -->
+        <div class="card kpi-card clickable-card" id="health-metric-card" title="Clique para gerenciar Hábitos Saudáveis, Exercícios e Calorias">
           <div class="kpi-header">
             <span class="kpi-title">Health Metric</span>
-            <span class="kpi-value-main" id="health-val">92%</span>
+            <span class="badge badge-imc-green" id="card-imc-badge">IMC 24.8 SAUDÁVEL</span>
           </div>
           <div class="sparkline-wrapper">
             <svg class="sparkline-svg" viewBox="0 0 120 30" preserveAspectRatio="none" id="health-sparkline">
               <polyline fill="none" stroke="#00E676" stroke-width="2" points="0,20 10,18 20,16 30,12 40,10 50,8 60,6 70,7 80,4 90,3 100,5 110,2 120,2" />
             </svg>
           </div>
-          <div class="kpi-subtext-footer">30-day biometrics sparkline trajectory</div>
+          <div class="kpi-header" style="margin-top: 4px;">
+            <span class="kpi-value-main" id="health-val">92%</span>
+            <span class="kpi-subtext-footer" id="card-habits-counter">3/3 Hábitos Concluídos</span>
+          </div>
         </div>
 
         <!-- 3. Finances Metric -->
@@ -481,8 +484,6 @@
       </div>
 
       <div class="modal-body">
-        
-        <!-- Task Clock / Timer Module (Relógio de Tarefa) -->
         <div class="card timer-widget-card">
           <div class="timer-header">
             <span class="timer-title-text">RELÓGIO DE TAREFA</span>
@@ -503,7 +504,6 @@
           </div>
         </div>
 
-        <!-- 4 Criteria Breakdown Grid -->
         <div class="criteria-grid">
           <div class="criteria-card">
             <span class="criteria-label">1. TAREFAS CONCLUÍDAS</span>
@@ -523,28 +523,142 @@
           </div>
         </div>
 
-        <!-- 2 Comparative Visual Charts Section -->
         <div class="charts-section">
-          
-          <!-- Chart 1: Proporção de Tarefas -->
           <div class="chart-box">
             <div class="chart-header">
               <span class="chart-title">GRÁFICO 1: PROPORÇÃO DE TAREFAS (CONCLUÍDAS VS ATRASADAS)</span>
             </div>
-            <div class="chart-svg-container" id="chart-task-ratio-container">
-              <!-- SVG Task Bar Chart rendered via JS -->
-            </div>
+            <div class="chart-svg-container" id="chart-task-ratio-container"></div>
           </div>
 
-          <!-- Chart 2: Comparativo Deep Work (Diário vs Média 7d vs Média Mensal) -->
           <div class="chart-box">
             <div class="chart-header">
               <span class="chart-title">GRÁFICO 2: COMPARATIVO DEEP WORK (TEMPO DE FOCO)</span>
               <span class="chart-subtitle-mono">Diário • Média 7d • Média Mensal</span>
             </div>
-            <div class="chart-svg-container" id="chart-deepwork-container">
-              <!-- SVG Comparative Deep Work Multi-Bar Chart rendered via JS -->
+            <div class="chart-svg-container" id="chart-deepwork-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Centered Modal Overlay Standard (Column 1, Card 3: Health Metric & Hábitos Saudáveis Modal) -->
+  <div class="modal-backdrop" id="health-modal-backdrop">
+    <div class="modal-container large-modal" role="dialog" aria-labelledby="modal-title-health" aria-modal="true">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-subtitle">COLUNA 1 // CARD 3</span>
+          <h2 class="modal-title" id="modal-title-health">Health Metric & Hábitos Saudáveis</h2>
+        </div>
+        <button class="modal-close-btn" id="health-modal-close" aria-label="Fechar janela">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- 1. IMC Health Status Banner -->
+        <div class="imc-banner-box" id="imc-banner-box">
+          <div class="imc-banner-header">
+            <span class="imc-banner-title">CRITÉRIO BASE IMC ATUAL</span>
+            <span class="badge badge-imc-green" id="modal-imc-status-badge">IMC 24.8 — SAUDÁVEL</span>
+          </div>
+          <div class="imc-banner-desc" id="modal-imc-desc">
+            Seu IMC atual está dentro da faixa de referência saudável (18.5 - 24.9).
+          </div>
+        </div>
+
+        <!-- 2. Hábitos Saudáveis Interactive Log Form -->
+        <form id="health-habits-form" class="card habits-form-card">
+          <div class="form-section-title">REGISTRO DIÁRIO DE HÁBITOS SAUDÁVEIS</div>
+
+          <!-- A) Sono -->
+          <div class="habit-group-box">
+            <div class="habit-group-header">
+              <span class="habit-title">A) SONO (META: 7 A 8 HORAS)</span>
+              <span class="habit-status-pill" id="sleep-status-pill">Meta Alcançada (+0.5h)</span>
             </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="health-sleep-hours">Horas Dormidas Hoje</label>
+                <input type="number" step="0.5" id="health-sleep-hours" class="form-input" value="7.5" placeholder="ex: 7.5" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Diferença para Meta (7.5h)</label>
+                <input type="text" id="health-sleep-diff" class="form-input readonly-input" value="+0.0 hrs" readonly />
+              </div>
+            </div>
+          </div>
+
+          <!-- B) Exercícios (Cardio vs Musculação) -->
+          <div class="habit-group-box">
+            <div class="habit-group-header">
+              <span class="habit-title">B) EXERCÍCIOS (CARDIO / MUSCULAÇÃO)</span>
+              <span class="habit-status-pill" id="exercise-status-pill">Concluído (45 min)</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Escolha Diária de Exercício</label>
+              <div class="exercise-type-selector">
+                <button type="button" class="exercise-type-btn active" id="btn-ex-cardio" data-type="Cardio">🏃 Cardio</button>
+                <button type="button" class="exercise-type-btn" id="btn-ex-musculacao" data-type="Musculação">🏋️ Musculação</button>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="health-exercise-time">Horário Realizado</label>
+                <input type="text" id="health-exercise-time" class="form-input" value="07:00 AM" placeholder="ex: 07:00 AM" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="health-exercise-duration">Tempo Investido (Minutos)</label>
+                <input type="number" id="health-exercise-duration" class="form-input" value="45" placeholder="ex: 45" required />
+              </div>
+            </div>
+          </div>
+
+          <!-- C) Equilíbrio Calórico (Ingestão x Gasto) -->
+          <div class="habit-group-box">
+            <div class="habit-group-header">
+              <span class="habit-title">C) EQUILÍBRIO CALÓRICO (INGESTÃO X GASTO)</span>
+              <span class="habit-status-pill text-green" id="calorie-status-pill">Déficit Positivo (-350 kcal)</span>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="health-calorie-intake">Ingestão de Alimentos (kcal)</label>
+                <input type="number" id="health-calorie-intake" class="form-input" value="2100" placeholder="ex: 2100" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="health-calorie-expenditure">Gasto Calórico (kcal)</label>
+                <input type="number" id="health-calorie-expenditure" class="form-input" value="2450" placeholder="ex: 2450" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Resultado Líquido Calórico Diário</label>
+              <input type="text" id="health-calorie-net" class="form-input readonly-input" value="-350 kcal (Déficit)" readonly />
+              <span class="form-hint" id="calorie-rule-hint">Regra: Ingestão menor que o gasto é positiva quando o IMC estiver acima da média saudável.</span>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="padding-top: 0;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Salvar Hábitos de Saúde</button>
+          </div>
+        </form>
+
+        <!-- 3. Gráficos dos Hábitos Section (SVG) -->
+        <div class="charts-section">
+          
+          <!-- Gráfico 1: Realizações dos Hábitos no Dia -->
+          <div class="chart-box">
+            <div class="chart-header">
+              <span class="chart-title">GRÁFICO 1: REALIZAÇÃO DIÁRIA DOS HÁBITOS (CONCLUÍDOS VS PENDENTES)</span>
+            </div>
+            <div class="chart-svg-container" id="chart-habits-fulfillment-container"></div>
+          </div>
+
+          <!-- Gráfico 2: Diferença / Variância para as Metas (Sono & Calorias) -->
+          <div class="chart-box">
+            <div class="chart-header">
+              <span class="chart-title">GRÁFICO 2: VARIÂNCIA E DIFERENÇA DAS METAS (SONO & BALANÇO CALÓRICO)</span>
+            </div>
+            <div class="chart-svg-container" id="chart-habits-variance-container"></div>
           </div>
 
         </div>
