@@ -2,7 +2,7 @@
    PERSONAL DASHBOARD COMMAND CENTER - JAVASCRIPT ENGINE
    Features: 3-Layer Persistence, Timestamp Guard, Task Timer (Cronômetro/Regressivo/Pomodoro),
    Focus Score 4-Criteria Engine, Health Metric & Hábitos Saudáveis Engine,
-   Visualização de IMC com Linha Verde (Desejável) e Linha Atual (Azul Nível Correto / Vermelho Acima ou Abaixo),
+   Visualização de IMC com Linha Verde Meta Desejável (21.7) e Linha Vermelha de Discrepância (% Acima),
    and Comparative SVG Charts.
    ========================================================================== */
 
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Default Global Application State
   let appState = {
-    lastUpdated: "2026-08-08T01:49:09.000Z",
+    lastUpdated: "2026-08-08T01:52:18.000Z",
     user: {
       name: "Eliel Tavares",
       role: "Lead Architect & Systems Engineer",
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         label: "Focus Score",
         target: "85%",
         deepWork: {
-          accumulatedSeconds: 24480, // 6.8 hours
+          accumulatedSeconds: 24480,
           targetHours: 8.0
         },
         deepWorkHistory: {
@@ -177,11 +177,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     HEALTH METRICS & HÁBITOS SAUDÁVEIS ENGINE WITH DUAL-LINE IMC VISUALIZER
+     HEALTH METRICS & HÁBITOS SAUDÁVEIS ENGINE WITH DISCREPANCY & % ABOVE TARGET
      -------------------------------------------------------------------------- */
   function calculateHealthMetrics() {
     const bmi = parseFloat(appState.user.currentBmi) || 24.8;
-    const isHealthyBmi = bmi >= 18.5 && bmi <= 24.9;
+    const idealTargetBmi = 21.7; // Midpoint healthy baseline target
+
+    // Calculate percentage above ideal target
+    const pctAbove = (((bmi - idealTargetBmi) / idealTargetBmi) * 100).toFixed(1);
+    const isAboveTarget = bmi > idealTargetBmi;
+    const isHealthyRange = bmi >= 18.5 && bmi <= 24.9;
 
     const sleep = appState.kpis.healthMetric.sleep || { hours: 7.5, completed: true };
     const sleepDiff = sleep.hours - 7.5;
@@ -193,8 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const netKcal = cal.intakeKcal - cal.expenditureKcal;
 
     let isCaloriePositive = false;
-    if (bmi > 24.9) {
-      isCaloriePositive = netKcal < 0;
+    if (bmi > 21.7) {
+      isCaloriePositive = netKcal < 0; // Negative deficit is positive when above target
     } else {
       isCaloriePositive = netKcal <= 300;
     }
@@ -209,7 +214,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return {
       bmi,
-      isHealthyBmi,
+      idealTargetBmi,
+      pctAbove,
+      isAboveTarget,
+      isHealthyRange,
       sleepHours: sleep.hours,
       sleepDiff: sleepDiff > 0 ? `+${sleepDiff.toFixed(1)}h` : `${sleepDiff.toFixed(1)}h`,
       isSleepHealthy,
@@ -632,7 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     PROFILE & KPIS RENDER (WITH DUAL-LINE IMC VISUALIZER)
+     PROFILE & KPIS RENDER (WITH DUAL-LINE RED DISCREPANCY & % ABOVE TARGET)
      -------------------------------------------------------------------------- */
   function renderUserProfile() {
     const avatarEl = document.getElementById('user-avatar');
@@ -658,30 +666,44 @@ document.addEventListener('DOMContentLoaded', () => {
     if (weightEl) weightEl.textContent = `${u.weight || '78.5'} kg`;
     if (heightEl) heightEl.textContent = `${u.height || '1.78'} m`;
     if (currentBmiEl) currentBmiEl.textContent = u.currentBmi || '24.8';
-    if (healthyBmiEl) healthyBmiEl.textContent = u.healthyBmi || '18.5 - 24.9';
+    if (healthyBmiEl) healthyBmiEl.textContent = u.healthyBmi || '21.7 (18.5-24.9)';
     if (commitmentEl) commitmentEl.textContent = u.commitmentStatus || 'ALTO (94%)';
 
-    // Dual-Line IMC Indicator rendering for Card 1
-    renderImcDualLineIndicators(parseFloat(u.currentBmi) || 24.8);
+    const bmi = parseFloat(u.currentBmi) || 24.8;
+    renderImcDualLineIndicators(bmi);
   }
 
   function renderImcDualLineIndicators(bmi) {
-    const isHealthy = bmi >= 18.5 && bmi <= 24.9;
-    const currentColor = isHealthy ? '#88C0D0' : '#FF5252'; // Blue if correct, Red if above/below
+    const idealTargetBmi = 21.7;
+    const pctAbove = (((bmi - idealTargetBmi) / idealTargetBmi) * 100).toFixed(1);
+    const isAbove = bmi > idealTargetBmi;
+
+    const currentColor = isAbove ? '#FF5252' : '#88C0D0'; // Red if above target!
 
     const card1Line = document.getElementById('card1-imc-current-line');
     const card1Dot = document.getElementById('imc-current-legend-dot');
+    const card1Badge = document.getElementById('imc-pct-badge');
+    const card1Desc = document.getElementById('card1-discrepancy-desc');
+
     if (card1Line) card1Line.setAttribute('stroke', currentColor);
     if (card1Dot) card1Dot.style.background = currentColor;
+    if (card1Badge) card1Badge.textContent = isAbove ? `+${pctAbove}% Acima` : `Dentro da Meta`;
+    if (card1Desc) {
+      card1Desc.textContent = isAbove 
+        ? `⚠️ Discrepância: ${pctAbove}% acima do peso ideal desejável.` 
+        : `✓ Peso dentro do parâmetro ideal desejável.`;
+    }
 
     const modalLine = document.getElementById('modal-imc-current-line');
     const modalDot = document.getElementById('modal-imc-legend-dot');
+    const modalBadge = document.getElementById('modal-imc-pct-badge');
+
     if (modalLine) modalLine.setAttribute('stroke', currentColor);
     if (modalDot) modalDot.style.background = currentColor;
+    if (modalBadge) modalBadge.textContent = isAbove ? `+${pctAbove}% Acima` : `Dentro da Meta`;
   }
 
   function renderKPIs() {
-    // Render Focus Score Card
     const metrics = calculateFocusScore();
     const focusValEl = document.getElementById('focus-score-val');
     const focusFillEl = document.getElementById('focus-ring-fill');
@@ -697,7 +719,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (focusDwEl) focusDwEl.textContent = `${metrics.accumulatedHours} / ${metrics.targetHours} hrs`;
     if (focusSubEl) focusSubEl.textContent = `Média 7d: ${appState.kpis.focusScore.deepWorkHistory.weeklyAvg7Days}h`;
 
-    // Render Health Metric Card (Card 3)
     const hMetrics = calculateHealthMetrics();
     const healthValEl = document.getElementById('health-val');
     const cardImcBadge = document.getElementById('card-imc-badge');
@@ -705,19 +726,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (healthValEl) healthValEl.textContent = `${hMetrics.completedHabits === 3 ? 95 : 82}%`;
     if (cardImcBadge) {
-      if (hMetrics.isHealthyBmi) {
-        cardImcBadge.className = 'badge badge-imc-blue';
-        cardImcBadge.textContent = `IMC ${hMetrics.bmi} CORRETO (AZUL)`;
-      } else {
+      if (hMetrics.isAboveTarget) {
         cardImcBadge.className = 'badge badge-imc-red';
-        cardImcBadge.textContent = `IMC ${hMetrics.bmi} ALERTA (VERMELHO)`;
+        cardImcBadge.textContent = `IMC ${hMetrics.bmi} (+${hMetrics.pctAbove}% ACIMA)`;
+      } else {
+        cardImcBadge.className = 'badge badge-imc-blue';
+        cardImcBadge.textContent = `IMC ${hMetrics.bmi} (DENTRO DA META)`;
       }
     }
     if (cardHabitsCounter) {
       cardHabitsCounter.textContent = `${hMetrics.completedHabits}/3 Hábitos Concluídos`;
     }
 
-    // Render Finances & Learning Metrics
     const finValEl = document.getElementById('finances-val');
     const finTrendEl = document.getElementById('finances-trend');
     if (finValEl) finValEl.textContent = appState.kpis.financesMetric.value || '$14,250';
@@ -754,20 +774,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const descEl = document.getElementById('modal-imc-desc');
 
     if (badgeEl) {
-      if (hMetrics.isHealthyBmi) {
-        badgeEl.className = 'badge badge-imc-blue';
-        badgeEl.textContent = `IMC ${hMetrics.bmi} — NÍVEL CORRETO (AZUL)`;
-      } else {
+      if (hMetrics.isAboveTarget) {
         badgeEl.className = 'badge badge-imc-red';
-        badgeEl.textContent = `IMC ${hMetrics.bmi} — FORA DA FAIXA (VERMELHO)`;
+        badgeEl.textContent = `IMC ${hMetrics.bmi} — ${hMetrics.pctAbove}% ACIMA DO NECESSÁRIO`;
+      } else {
+        badgeEl.className = 'badge badge-imc-blue';
+        badgeEl.textContent = `IMC ${hMetrics.bmi} — DENTRO DA META`;
       }
     }
 
     if (descEl) {
-      if (hMetrics.isHealthyBmi) {
-        descEl.textContent = `Seu IMC atual (${hMetrics.bmi}) está no nível correto (linha azul). A linha verde pontilhada é a meta desejável (18.5 - 24.9).`;
+      if (hMetrics.isAboveTarget) {
+        descEl.textContent = `Discrepância Detectada: Seu IMC atual (${hMetrics.bmi}) está ${hMetrics.pctAbove}% acima da meta ideal desejável (21.7). A linha vermelha destaca essa variação acima do necessário em relação à linha verde desejável.`;
       } else {
-        descEl.textContent = `Atenção: Seu IMC atual (${hMetrics.bmi}) está fora do nível saudável (linha vermelha). Ajuste a alimentação e exercícios para alcançar a linha verde desejável.`;
+        descEl.textContent = `Seu IMC atual (${hMetrics.bmi}) está no nível ideal desejável (linha azul). A linha verde representa a meta de referência (21.7).`;
       }
     }
 
