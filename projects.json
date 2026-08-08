@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-08-08T01:19:24.000Z",
+  "lastUpdated": "2026-08-08T01:31:10.000Z",
   "user": {
     "name": "Eliel Tavares",
     "role": "Lead Architect & Systems Engineer",
@@ -16,7 +16,17 @@
     "focusScore": {
       "value": 85,
       "label": "Focus Score",
-      "target": "85%"
+      "target": "85%",
+      "deepWork": {
+        "accumulatedSeconds": 24480,
+        "targetHours": 8.0
+      },
+      "deepWorkHistory": {
+        "today": 6.8,
+        "yesterday": 5.2,
+        "weeklyAvg7Days": 6.1,
+        "monthlyAvg": 5.8
+      }
     },
     "healthMetric": {
       "value": 92,
