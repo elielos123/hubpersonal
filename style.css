@@ -323,7 +323,7 @@ button, input {
   border-color: var(--accent-cyan);
 }
 
-/* Biometrics & Commitment Summary Grid */
+/* Biometrics Summary Grid */
 .profile-biometrics-summary {
   display: flex;
   flex-direction: column;
@@ -385,6 +385,72 @@ button, input {
   padding: 2px 8px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(0, 230, 118, 0.3);
+}
+
+/* Backup & Sync Action Bar */
+.backup-action-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.sync-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot-synced { background-color: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.dot-syncing { background-color: var(--accent-cyan); animation: pulse 1s infinite; }
+.dot-conflict { background-color: var(--accent-orange); }
+
+.sync-status-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.backup-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-backup-action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 5px 8px;
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-backup-action:hover {
+  background: var(--bg-card-hover);
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+}
+
+.btn-backup-action.icon-only {
+  flex: 0 0 28px;
+  padding: 0;
+  height: 28px;
 }
 
 /* KPI Group */
@@ -1489,6 +1555,34 @@ button, input {
   gap: 16px;
   max-height: 80vh;
   overflow-y: auto;
+}
+
+.modal-section-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-base);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.modal-section-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.modal-backup-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-backup-buttons .btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 12px;
 }
 
 .form-group {
