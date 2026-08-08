@@ -3,7 +3,13 @@
     "name": "Eliel Tavares",
     "role": "Lead Architect & Systems Engineer",
     "status": "Online",
-    "avatar": "ET"
+    "avatar": "ET",
+    "birthDate": "1994-08-15",
+    "weight": "78.5",
+    "height": "1.78",
+    "currentBmi": 24.8,
+    "healthyBmi": "18.5 - 24.9",
+    "commitmentStatus": "ALTO (94%)"
   },
   "kpis": {
     "focusScore": {
