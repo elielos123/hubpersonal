@@ -1,7 +1,8 @@
 /* ==========================================================================
    PERSONAL DASHBOARD COMMAND CENTER - JAVASCRIPT ENGINE
    Features: 3-Layer Persistence, Timestamp Guard, Task Timer (Cronômetro/Regressivo/Pomodoro),
-   Focus Score 4-Criteria Engine, and 2 Comparative SVG Charts.
+   Focus Score 4-Criteria Engine, Health Metric & Hábitos Saudáveis Engine (Sono, Exercícios Cardio/Musculação, Calorias),
+   IMC Status Indicator (Verde/Vermelho), and Comparative SVG Charts.
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Default Global Application State
   let appState = {
-    lastUpdated: "2026-08-08T01:31:10.000Z",
+    lastUpdated: "2026-08-08T01:44:37.000Z",
     user: {
       name: "Eliel Tavares",
       role: "Lead Architect & Systems Engineer",
@@ -40,7 +41,29 @@ document.addEventListener('DOMContentLoaded', () => {
           monthlyAvg: 5.8
         }
       },
-      healthMetric: { value: 92, label: "Health Index", history: [65, 70, 72, 78, 80, 82, 85, 84, 88, 90, 89, 92] },
+      healthMetric: {
+        value: 92,
+        label: "Health Index",
+        history: [65, 70, 72, 78, 80, 82, 85, 84, 88, 90, 89, 92],
+        sleep: {
+          hours: 7.5,
+          target: 7.5,
+          completed: true
+        },
+        exercise: {
+          type: "Cardio",
+          time: "07:00 AM",
+          durationMinutes: 45,
+          completed: true
+        },
+        caloricBalance: {
+          intakeKcal: 2100,
+          expenditureKcal: 2450,
+          netKcal: -350,
+          isPositive: true,
+          completed: true
+        }
+      },
       financesMetric: { value: "$14,250", trend: "+12.4%", label: "Monthly Cashflow", isPositive: true },
       learningMetric: { value: 68, label: "Quarterly Target", details: "34 / 50 Hours Completed" }
     },
@@ -153,6 +176,55 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
+     HEALTH METRICS & HÁBITOS SAUDÁVEIS ENGINE
+     -------------------------------------------------------------------------- */
+  function calculateHealthMetrics() {
+    const bmi = parseFloat(appState.user.currentBmi) || 24.8;
+    const isHealthyBmi = bmi >= 18.5 && bmi <= 24.9;
+
+    const sleep = appState.kpis.healthMetric.sleep || { hours: 7.5, completed: true };
+    const sleepDiff = sleep.hours - 7.5;
+    const isSleepHealthy = sleep.hours >= 7.0 && sleep.hours <= 8.5;
+
+    const exercise = appState.kpis.healthMetric.exercise || { type: "Cardio", time: "07:00 AM", durationMinutes: 45, completed: true };
+    
+    const cal = appState.kpis.healthMetric.caloricBalance || { intakeKcal: 2100, expenditureKcal: 2450, netKcal: -350, isPositive: true };
+    const netKcal = cal.intakeKcal - cal.expenditureKcal;
+
+    // Caloric Rule: Positive if Intake < Expenditure when BMI > 24.9 (overweight)
+    let isCaloriePositive = false;
+    if (bmi > 24.9) {
+      isCaloriePositive = netKcal < 0;
+    } else {
+      isCaloriePositive = netKcal <= 300;
+    }
+
+    let completedHabits = 0;
+    if (isSleepHealthy) completedHabits++;
+    if (exercise.durationMinutes >= 20) completedHabits++;
+    if (isCaloriePositive) completedHabits++;
+
+    const healthScore = Math.round((completedHabits / 3) * 100);
+    appState.kpis.healthMetric.value = healthScore > 0 ? healthScore : 92;
+
+    return {
+      bmi,
+      isHealthyBmi,
+      sleepHours: sleep.hours,
+      sleepDiff: sleepDiff > 0 ? `+${sleepDiff.toFixed(1)}h` : `${sleepDiff.toFixed(1)}h`,
+      isSleepHealthy,
+      exerciseType: exercise.type,
+      exerciseTime: exercise.time,
+      exerciseDuration: exercise.durationMinutes,
+      intakeKcal: cal.intakeKcal,
+      expenditureKcal: cal.expenditureKcal,
+      netKcal,
+      isCaloriePositive,
+      completedHabits
+    };
+  }
+
+  /* --------------------------------------------------------------------------
      FOCUS SCORE & 4 CRITERIA CALCULATION ENGINE
      -------------------------------------------------------------------------- */
   function calculateFocusScore() {
@@ -160,37 +232,26 @@ document.addEventListener('DOMContentLoaded', () => {
     let pendingCount = 0;
     let delayedCount = 0;
 
-    // Scan timeline tasks
     appState.timeline.forEach(item => {
-      if (item.completed) {
-        completedCount++;
-      } else if (item.status === 'DELAYED') {
-        delayedCount++;
-      } else {
-        pendingCount++;
-      }
+      if (item.completed) completedCount++;
+      else if (item.status === 'DELAYED') delayedCount++;
+      else pendingCount++;
     });
 
-    // Scan project milestones
     appState.projects.forEach(proj => {
-      if (proj.status === 'DELAYED') {
-        delayedCount += 0.5;
-      }
+      if (proj.status === 'DELAYED') delayedCount += 0.5;
     });
 
-    // Deep Work Ratio (accumulated hours / target hours)
     const dw = appState.kpis.focusScore.deepWork || { accumulatedSeconds: 24480, targetHours: 8.0 };
     const accumulatedHours = (dw.accumulatedSeconds / 3600);
     appState.kpis.focusScore.deepWorkHistory.today = parseFloat(accumulatedHours.toFixed(1));
 
     const dwRatio = Math.min(1.0, accumulatedHours / dw.targetHours);
-
-    // Formula: Task Completion ratio weighted by 60% + Deep Work ratio 40% - Delayed penalty
     const totalTasks = (completedCount + pendingCount + (delayedCount * 1.5)) || 1;
     const taskRatio = (completedCount / totalTasks);
     
     let score = Math.round((taskRatio * 60) + (dwRatio * 40));
-    score = Math.max(10, Math.min(99, score)); // Clamp between 10% and 99%
+    score = Math.max(10, Math.min(99, score));
 
     appState.kpis.focusScore.value = score;
     return {
@@ -250,10 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fallbackGitHubSync() {
     try {
       const fileUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/projects.json`;
-      const headers = {
-        'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'CommandCenterApp'
-      };
+      const headers = { 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'CommandCenterApp' };
 
       const checkRes = await fetch(fileUrl, { headers });
       if (!checkRes.ok) throw new Error('GitHub API unreachable');
@@ -342,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     TASK TIMER ENGINE (RELÓGIO DE TAREFA: CRONÔMETRO, REGRESSIVO, POMODORO)
+     TASK TIMER ENGINE (RELÓGIO DE TAREFA)
      -------------------------------------------------------------------------- */
   function setTimerMode(mode) {
     appState.timerState.mode = mode;
@@ -352,16 +410,15 @@ document.addEventListener('DOMContentLoaded', () => {
       appState.timerState.seconds = 0;
       appState.timerState.initialSeconds = 0;
     } else if (mode === 'regressivo') {
-      appState.timerState.seconds = 2700; // 45 mins
+      appState.timerState.seconds = 2700;
       appState.timerState.initialSeconds = 2700;
     } else if (mode === 'pomodoro') {
-      appState.timerState.seconds = 1500; // 25 mins
+      appState.timerState.seconds = 1500;
       appState.timerState.initialSeconds = 1500;
     }
 
     updateTimerDisplay();
 
-    // Update active button state
     document.querySelectorAll('.timer-mode-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.mode === mode);
     });
@@ -386,9 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Add to accumulated Deep Work time
       appState.kpis.focusScore.deepWork.accumulatedSeconds++;
-      
       updateTimerDisplay();
       renderKPIs();
     }, 1000);
@@ -403,7 +458,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const startBtn = document.getElementById('timer-btn-start');
     if (startBtn) startBtn.textContent = '▶ Iniciar Focus';
 
-    // Persist Deep Work progress
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
   }
 
@@ -425,7 +479,58 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     2 COMPARATIVE VISUAL SVG CHARTS RENDERER
+     HÁBITOS SAUDÁVEIS SVG CHARTS RENDERER
+     -------------------------------------------------------------------------- */
+  function renderHabitsFulfillmentChart(hMetrics) {
+    const container = document.getElementById('chart-habits-fulfillment-container');
+    if (!container) return;
+
+    const completed = hMetrics.completedHabits || 3;
+    const pending = 3 - completed;
+
+    container.innerHTML = `
+      <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
+        <line x1="0" y1="60" x2="400" y2="60" stroke="#232C36" stroke-dasharray="3,3" />
+
+        <!-- Bar 1: Concluídos -->
+        <rect x="80" y="${100 - (completed * 25)}" width="90" height="${completed * 25}" rx="4" fill="#00E676" />
+        <text x="125" y="${88 - (completed * 25)}" fill="#00E676" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${completed} Hábitos (${Math.round((completed/3)*100)}%)</text>
+        <text x="125" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Realizados Hoje</text>
+
+        <!-- Bar 2: Pendentes -->
+        <rect x="230" y="${100 - (pending * 25)}" width="90" height="${pending * 25}" rx="4" fill="#FF9100" />
+        <text x="275" y="${88 - (pending * 25)}" fill="#FF9100" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${pending} Pendentes</text>
+        <text x="275" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Não Realizados</text>
+      </svg>
+    `;
+  }
+
+  function renderHabitsVarianceChart(hMetrics) {
+    const container = document.getElementById('chart-habits-variance-container');
+    if (!container) return;
+
+    const sleepDiffVal = (hMetrics.sleepHours - 7.5).toFixed(1);
+    const netKcal = hMetrics.netKcal;
+
+    container.innerHTML = `
+      <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
+        <line x1="0" y1="60" x2="400" y2="60" stroke="#5E81AC" stroke-width="1.5" />
+
+        <!-- Bar 1: Variação de Sono (Horas vs 7.5h Meta) -->
+        <rect x="70" y="${sleepDiffVal >= 0 ? 60 - Math.min(45, Math.abs(sleepDiffVal) * 20) : 60}" width="80" height="${Math.max(10, Math.min(45, Math.abs(sleepDiffVal) * 20))}" rx="4" fill="${hMetrics.isSleepHealthy ? '#00E676' : '#FF9100'}" />
+        <text x="110" y="${sleepDiffVal >= 0 ? 50 - Math.min(45, Math.abs(sleepDiffVal) * 20) : 80 + Math.min(45, Math.abs(sleepDiffVal) * 20)}" fill="${hMetrics.isSleepHealthy ? '#00E676' : '#FF9100'}" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${hMetrics.sleepDiff}</text>
+        <text x="110" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Sono vs Meta</text>
+
+        <!-- Bar 2: Balanço Calórico (Líquido kcal) -->
+        <rect x="250" y="${netKcal <= 0 ? 60 - Math.min(45, Math.abs(netKcal) / 10) : 60}" width="80" height="${Math.max(10, Math.min(45, Math.abs(netKcal) / 10))}" rx="4" fill="${hMetrics.isCaloriePositive ? '#00E676' : '#FF5252'}" />
+        <text x="290" y="${netKcal <= 0 ? 50 - Math.min(45, Math.abs(netKcal) / 10) : 80 + Math.min(45, Math.abs(netKcal) / 10)}" fill="${hMetrics.isCaloriePositive ? '#00E676' : '#FF5252'}" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${netKcal} kcal</text>
+        <text x="290" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Balanço Calórico</text>
+      </svg>
+    `;
+  }
+
+  /* --------------------------------------------------------------------------
+     FOCUS SCORE SVG CHARTS RENDERER
      -------------------------------------------------------------------------- */
   function renderTaskRatioChart(metrics) {
     const container = document.getElementById('chart-task-ratio-container');
@@ -442,21 +547,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     container.innerHTML = `
       <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
-        <!-- Background Grid Lines -->
         <line x1="0" y1="30" x2="400" y2="30" stroke="#232C36" stroke-dasharray="3,3" />
         <line x1="0" y1="70" x2="400" y2="70" stroke="#232C36" stroke-dasharray="3,3" />
 
-        <!-- Bar 1: Concluídas -->
         <rect x="40" y="${100 - pComp}" width="70" height="${pComp}" rx="4" fill="#00E676" />
         <text x="75" y="${90 - pComp}" fill="#00E676" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${completed} (${pComp}%)</text>
         <text x="75" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Concluídas</text>
 
-        <!-- Bar 2: Pendentes Atuais -->
         <rect x="165" y="${100 - pPend}" width="70" height="${pPend}" rx="4" fill="#88C0D0" />
         <text x="200" y="${90 - pPend}" fill="#88C0D0" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${pending} (${pPend}%)</text>
         <text x="200" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Pendentes</text>
 
-        <!-- Bar 3: Atrasadas -->
         <rect x="290" y="${100 - pDel}" width="70" height="${pDel}" rx="4" fill="#FF9100" />
         <text x="325" y="${90 - pDel}" fill="#FF9100" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${delayed} (${pDel}%)</text>
         <text x="325" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Atrasadas</text>
@@ -469,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!container) return;
 
     const dh = appState.kpis.focusScore.deepWorkHistory || { today: 6.8, yesterday: 5.2, weeklyAvg7Days: 6.1, monthlyAvg: 5.8 };
-    const maxVal = 10.0; // scale up to 10 hours
+    const maxVal = 10.0;
 
     const hToday = Math.round((dh.today / maxVal) * 80);
     const hWeekly = Math.round((dh.weeklyAvg7Days / maxVal) * 80);
@@ -477,21 +578,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     container.innerHTML = `
       <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="none">
-        <!-- Target Line 8.0h -->
         <line x1="0" y1="36" x2="400" y2="36" stroke="#5E81AC" stroke-width="1.5" stroke-dasharray="4,4" />
         <text x="395" y="32" fill="#5E81AC" font-size="10" font-family="JetBrains Mono" text-anchor="end">Target: 8.0h</text>
 
-        <!-- Bar 1: Diário (Hoje) -->
         <rect x="40" y="${100 - hToday}" width="70" height="${hToday}" rx="4" fill="#00E676" />
         <text x="75" y="${90 - hToday}" fill="#00E676" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${dh.today}h</text>
         <text x="75" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Diário (Hoje)</text>
 
-        <!-- Bar 2: Média Semanal 7d -->
         <rect x="165" y="${100 - hWeekly}" width="70" height="${hWeekly}" rx="4" fill="#88C0D0" />
         <text x="200" y="${90 - hWeekly}" fill="#88C0D0" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${dh.weeklyAvg7Days}h</text>
         <text x="200" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Média 7d</text>
 
-        <!-- Bar 3: Média Mensal -->
         <rect x="290" y="${100 - hMonthly}" width="70" height="${hMonthly}" rx="4" fill="#5E81AC" />
         <text x="325" y="${90 - hMonthly}" fill="#5E81AC" font-size="12" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">${dh.monthlyAvg}h</text>
         <text x="325" y="115" fill="#81A1C1" font-size="11" font-family="Inter" text-anchor="middle">Média Mensal</text>
@@ -570,8 +667,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderKPIs() {
+    // Render Focus Score Card
     const metrics = calculateFocusScore();
-
     const focusValEl = document.getElementById('focus-score-val');
     const focusFillEl = document.getElementById('focus-ring-fill');
     const focusDwEl = document.getElementById('focus-deepwork-val');
@@ -583,13 +680,30 @@ document.addEventListener('DOMContentLoaded', () => {
       const offset = circumference - (metrics.score / 100) * circumference;
       focusFillEl.style.strokeDashoffset = offset;
     }
-
     if (focusDwEl) focusDwEl.textContent = `${metrics.accumulatedHours} / ${metrics.targetHours} hrs`;
     if (focusSubEl) focusSubEl.textContent = `Média 7d: ${appState.kpis.focusScore.deepWorkHistory.weeklyAvg7Days}h`;
 
+    // Render Health Metric Card (Card 3)
+    const hMetrics = calculateHealthMetrics();
     const healthValEl = document.getElementById('health-val');
-    if (healthValEl) healthValEl.textContent = `${appState.kpis.healthMetric.value || 92}%`;
+    const cardImcBadge = document.getElementById('card-imc-badge');
+    const cardHabitsCounter = document.getElementById('card-habits-counter');
 
+    if (healthValEl) healthValEl.textContent = `${hMetrics.completedHabits === 3 ? 95 : 82}%`;
+    if (cardImcBadge) {
+      if (hMetrics.isHealthyBmi) {
+        cardImcBadge.className = 'badge badge-imc-green';
+        cardImcBadge.textContent = `IMC ${hMetrics.bmi} SAUDÁVEL`;
+      } else {
+        cardImcBadge.className = 'badge badge-imc-red';
+        cardImcBadge.textContent = `IMC ${hMetrics.bmi} ATENÇÃO`;
+      }
+    }
+    if (cardHabitsCounter) {
+      cardHabitsCounter.textContent = `${hMetrics.completedHabits}/3 Hábitos Concluídos`;
+    }
+
+    // Render Finances & Learning Metrics
     const finValEl = document.getElementById('finances-val');
     const finTrendEl = document.getElementById('finances-trend');
     if (finValEl) finValEl.textContent = appState.kpis.financesMetric.value || '$14,250';
@@ -602,8 +716,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (learnFillEl) learnFillEl.style.width = `${appState.kpis.learningMetric.value}%`;
     if (learnDetailsEl) learnDetailsEl.textContent = appState.kpis.learningMetric.details;
 
-    // Render Modal Focus components if open
     renderFocusModalData(metrics);
+    renderHealthModalData(hMetrics);
   }
 
   function renderFocusModalData(metrics) {
@@ -619,6 +733,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderTaskRatioChart(metrics);
     renderDeepWorkComparativeChart();
+  }
+
+  function renderHealthModalData(hMetrics) {
+    const badgeEl = document.getElementById('modal-imc-status-badge');
+    const descEl = document.getElementById('modal-imc-desc');
+
+    if (badgeEl) {
+      if (hMetrics.isHealthyBmi) {
+        badgeEl.className = 'badge badge-imc-green';
+        badgeEl.textContent = `IMC ${hMetrics.bmi} — SAUDÁVEL`;
+      } else {
+        badgeEl.className = 'badge badge-imc-red';
+        badgeEl.textContent = `IMC ${hMetrics.bmi} — FORA DA FAIXA`;
+      }
+    }
+
+    if (descEl) {
+      if (hMetrics.isHealthyBmi) {
+        descEl.textContent = `Seu IMC atual (${hMetrics.bmi}) está dentro do critério de referência saudável (18.5 - 24.9).`;
+      } else {
+        descEl.textContent = `Atenção: Seu IMC atual (${hMetrics.bmi}) está fora do critério saudável (18.5 - 24.9). Mantenha hábitos direcionados para ajuste.`;
+      }
+    }
+
+    // Populate form inputs
+    const sleepInput = document.getElementById('health-sleep-hours');
+    const sleepDiffInput = document.getElementById('health-sleep-diff');
+    const sleepPill = document.getElementById('sleep-status-pill');
+
+    if (sleepInput) sleepInput.value = hMetrics.sleepHours;
+    if (sleepDiffInput) sleepDiffInput.value = hMetrics.sleepDiff;
+    if (sleepPill) {
+      sleepPill.textContent = hMetrics.isSleepHealthy ? `Meta Alcançada (${hMetrics.sleepDiff})` : `Abaixo da Meta (${hMetrics.sleepDiff})`;
+      sleepPill.className = hMetrics.isSleepHealthy ? 'habit-status-pill text-green' : 'habit-status-pill text-orange';
+    }
+
+    const exTimeInput = document.getElementById('health-exercise-time');
+    const exDurInput = document.getElementById('health-exercise-duration');
+    const exPill = document.getElementById('exercise-status-pill');
+
+    if (exTimeInput) exTimeInput.value = hMetrics.exerciseTime;
+    if (exDurInput) exDurInput.value = hMetrics.exerciseDuration;
+    if (exPill) {
+      exPill.textContent = `${hMetrics.exerciseType} (${hMetrics.exerciseDuration} min às ${hMetrics.exerciseTime})`;
+    }
+
+    const intakeInput = document.getElementById('health-calorie-intake');
+    const expenditureInput = document.getElementById('health-calorie-expenditure');
+    const netInput = document.getElementById('health-calorie-net');
+    const calPill = document.getElementById('calorie-status-pill');
+
+    if (intakeInput) intakeInput.value = hMetrics.intakeKcal;
+    if (expenditureInput) expenditureInput.value = hMetrics.expenditureKcal;
+    if (netInput) netInput.value = `${hMetrics.netKcal} kcal (${hMetrics.netKcal < 0 ? 'Déficit' : 'Superávit'})`;
+    if (calPill) {
+      calPill.textContent = hMetrics.isCaloriePositive ? `Balanço Positivo (${hMetrics.netKcal} kcal)` : `Balanço Fora do Alvo (${hMetrics.netKcal} kcal)`;
+      calPill.className = hMetrics.isCaloriePositive ? 'habit-status-pill text-green' : 'habit-status-pill text-orange';
+    }
+
+    renderHabitsFulfillmentChart(hMetrics);
+    renderHabitsVarianceChart(hMetrics);
   }
 
   /* --------------------------------------------------------------------------
@@ -850,7 +1025,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     CENTERED MODAL OVERLAYS (PROFILE MODAL & FOCUS SCORE MODAL)
+     CENTERED MODAL OVERLAYS (PROFILE, FOCUS, HEALTH MODALS)
      -------------------------------------------------------------------------- */
   function openProfileModal() {
     const backdrop = document.getElementById('profile-modal-backdrop');
@@ -887,6 +1062,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (backdrop) backdrop.classList.remove('active');
   }
 
+  function openHealthModal() {
+    const backdrop = document.getElementById('health-modal-backdrop');
+    if (!backdrop) return;
+
+    renderKPIs();
+    backdrop.classList.add('active');
+  }
+
+  function closeHealthModal() {
+    const backdrop = document.getElementById('health-modal-backdrop');
+    if (backdrop) backdrop.classList.remove('active');
+  }
+
   /* --------------------------------------------------------------------------
      EVENT LISTENERS & INGESTION TERMINAL
      -------------------------------------------------------------------------- */
@@ -901,6 +1089,84 @@ document.addEventListener('DOMContentLoaded', () => {
     if (focusModalBackdrop) {
       focusModalBackdrop.addEventListener('click', (e) => {
         if (e.target === focusModalBackdrop) closeFocusModal();
+      });
+    }
+
+    // Health Metric Card click & modal controls
+    const healthCard = document.getElementById('health-metric-card');
+    const healthModalBackdrop = document.getElementById('health-modal-backdrop');
+    const healthModalClose = document.getElementById('health-modal-close');
+
+    if (healthCard) healthCard.addEventListener('click', openHealthModal);
+    if (healthModalClose) healthModalClose.addEventListener('click', closeHealthModal);
+    if (healthModalBackdrop) {
+      healthModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === healthModalBackdrop) closeHealthModal();
+      });
+    }
+
+    // Exercise type switcher
+    const exCardioBtn = document.getElementById('btn-ex-cardio');
+    const exMusculacaoBtn = document.getElementById('btn-ex-musculacao');
+
+    if (exCardioBtn && exMusculacaoBtn) {
+      exCardioBtn.addEventListener('click', () => {
+        exCardioBtn.classList.add('active');
+        exMusculacaoBtn.classList.remove('active');
+        appState.kpis.healthMetric.exercise.type = 'Cardio';
+      });
+      exMusculacaoBtn.addEventListener('click', () => {
+        exMusculacaoBtn.classList.add('active');
+        exCardioBtn.classList.remove('active');
+        appState.kpis.healthMetric.exercise.type = 'Musculação';
+      });
+    }
+
+    // Real-time calculation on Health Habits Form
+    const sleepInput = document.getElementById('health-sleep-hours');
+    const sleepDiffInput = document.getElementById('health-sleep-diff');
+    if (sleepInput && sleepDiffInput) {
+      sleepInput.addEventListener('input', () => {
+        const val = parseFloat(sleepInput.value) || 7.5;
+        const diff = val - 7.5;
+        sleepDiffInput.value = diff > 0 ? `+${diff.toFixed(1)} hrs` : `${diff.toFixed(1)} hrs`;
+      });
+    }
+
+    const intakeInput = document.getElementById('health-calorie-intake');
+    const expenditureInput = document.getElementById('health-calorie-expenditure');
+    const netInput = document.getElementById('health-calorie-net');
+
+    function updateCalorieNet() {
+      const intake = parseInt(intakeInput.value) || 0;
+      const expenditure = parseInt(expenditureInput.value) || 0;
+      const net = intake - expenditure;
+      netInput.value = `${net} kcal (${net < 0 ? 'Déficit' : 'Superávit'})`;
+    }
+
+    if (intakeInput) intakeInput.addEventListener('input', updateCalorieNet);
+    if (expenditureInput) expenditureInput.addEventListener('input', updateCalorieNet);
+
+    // Health Form Submit
+    const healthForm = document.getElementById('health-habits-form');
+    if (healthForm) {
+      healthForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        updateState(s => {
+          s.kpis.healthMetric.sleep.hours = parseFloat(document.getElementById('health-sleep-hours').value) || 7.5;
+          s.kpis.healthMetric.exercise.time = document.getElementById('health-exercise-time').value.trim();
+          s.kpis.healthMetric.exercise.durationMinutes = parseInt(document.getElementById('health-exercise-duration').value) || 45;
+          
+          const intake = parseInt(document.getElementById('health-calorie-intake').value) || 2100;
+          const expenditure = parseInt(document.getElementById('health-calorie-expenditure').value) || 2450;
+          s.kpis.healthMetric.caloricBalance.intakeKcal = intake;
+          s.kpis.healthMetric.caloricBalance.expenditureKcal = expenditure;
+          s.kpis.healthMetric.caloricBalance.netKcal = intake - expenditure;
+        });
+
+        renderKPIs();
+        closeHealthModal();
       });
     }
 
@@ -973,9 +1239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (profileModalCancel) profileModalCancel.addEventListener('click', closeProfileModal);
     if (profileModalBackdrop) {
       profileModalBackdrop.addEventListener('click', (e) => {
-        if (e.target === profileModalBackdrop) {
-          closeProfileModal();
-        }
+        if (e.target === profileModalBackdrop) closeProfileModal();
       });
     }
 
@@ -1012,6 +1276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         renderUserProfile();
+        renderKPIs();
         closeProfileModal();
       });
     }
@@ -1067,9 +1332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (submitBtn) submitBtn.addEventListener('click', handleIngest);
     if (quickInput) {
       quickInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          handleIngest();
-        }
+        if (e.key === 'Enter') handleIngest();
       });
     }
 
@@ -1089,6 +1352,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeProjectDrawer();
         closeProfileModal();
         closeFocusModal();
+        closeHealthModal();
       }
     });
 
