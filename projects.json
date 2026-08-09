@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-08-09T21:55:51.478Z",
+  "lastUpdated": "2026-08-09T21:55:53.485Z",
   "user": {
     "name": "Eliel Tavares",
     "role": "Lead Architect & Systems Engineer",
@@ -14,7 +14,7 @@
   },
   "kpis": {
     "focusScore": {
-      "value": 44,
+      "value": 42,
       "label": "Focus Score",
       "target": "85%",
       "deepWork": {
@@ -239,7 +239,7 @@
       "title": "teste",
       "projectTag": "#General",
       "status": "ON TRACK",
-      "completed": false,
+      "completed": true,
       "time": "18:55"
     },
     {
