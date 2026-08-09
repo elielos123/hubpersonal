@@ -1,25 +1,25 @@
 {
-  "lastUpdated": "2026-08-08T01:59:22.000Z",
+  "lastUpdated": "2026-08-08T05:09:45.467Z",
   "user": {
     "name": "Eliel Tavares",
     "role": "Lead Architect & Systems Engineer",
     "status": "Online",
     "avatar": "ET",
     "birthDate": "1994-08-15",
-    "weight": "78.5",
+    "weight": "101",
     "height": "1.78",
-    "currentBmi": 24.8,
+    "currentBmi": 31.9,
     "healthyBmi": "18.5 - 24.9",
     "commitmentStatus": "ALTO (94%)"
   },
   "kpis": {
     "focusScore": {
-      "value": 85,
+      "value": 44,
       "label": "Focus Score",
       "target": "85%",
       "deepWork": {
         "accumulatedSeconds": 24480,
-        "targetHours": 8.0
+        "targetHours": 8
       },
       "deepWorkHistory": {
         "today": 6.8,
@@ -29,9 +29,22 @@
       }
     },
     "healthMetric": {
-      "value": 92,
+      "value": 100,
       "label": "Health Index",
-      "history": [65, 70, 72, 78, 80, 82, 85, 84, 88, 90, 89, 92],
+      "history": [
+        65,
+        70,
+        72,
+        78,
+        80,
+        82,
+        85,
+        84,
+        88,
+        90,
+        89,
+        92
+      ],
       "sleep": {
         "hours": 7.5,
         "target": 7.5,
@@ -52,15 +65,35 @@
       }
     },
     "financesMetric": {
-      "value": "$14,250",
+      "value": "$1.876,57",
       "trend": "+12.4%",
       "label": "Monthly Cashflow",
       "isPositive": true,
       "transactions": [
-        { "id": "tx-1", "type": "entrada", "value": 18500, "date": "2026-08-08", "description": "Enterprise Retainer Client A", "tag": "#Salary" },
-        { "id": "tx-2", "type": "saida", "value": 2450, "date": "2026-08-08", "description": "AWS & Vercel Edge Infrastructure", "tag": "#Server" },
-        { "id": "tx-3", "type": "saida", "value": 1200, "date": "2026-08-07", "description": "GitHub Copilot & Figma Software", "tag": "#SaaS" },
-        { "id": "tx-4", "type": "saida", "value": 600, "date": "2026-08-06", "description": "Google Ads Campaign", "tag": "#Marketing" }
+        {
+          "id": "tx-1786165281356",
+          "type": "entrada",
+          "value": 2000,
+          "date": "2026-08-08",
+          "description": "Pagamento",
+          "tag": "#SalarioMensal"
+        },
+        {
+          "id": "tx-1786165546559",
+          "type": "saida",
+          "value": 98.43,
+          "date": "2026-08-08",
+          "description": "PowerServ",
+          "tag": "#Internet"
+        },
+        {
+          "id": "tx-1786165785467",
+          "type": "saida",
+          "value": 25,
+          "date": "2026-08-08",
+          "description": "Para Nelio (linguiça)",
+          "tag": "#cafe"
+        }
       ]
     },
     "learningMetric": {
@@ -68,6 +101,12 @@
       "label": "Quarterly Target",
       "details": "34 / 50 Hours Completed"
     }
+  },
+  "timerState": {
+    "mode": "pomodoro",
+    "seconds": 1500,
+    "initialSeconds": 1500,
+    "isRunning": false
   },
   "pipeline": {
     "ideation": 2,
@@ -88,10 +127,22 @@
         "date": "Aug 08, 2026"
       },
       "milestones": [
-        { "title": "Core Async Event Loop Architecture", "completed": true },
-        { "title": "In-Memory State Snapshotting", "completed": true },
-        { "title": "gRPC Streaming Pipeline Integration", "completed": false },
-        { "title": "Multi-Region Distributed Failover", "completed": false }
+        {
+          "title": "Core Async Event Loop Architecture",
+          "completed": true
+        },
+        {
+          "title": "In-Memory State Snapshotting",
+          "completed": true
+        },
+        {
+          "title": "gRPC Streaming Pipeline Integration",
+          "completed": false
+        },
+        {
+          "title": "Multi-Region Distributed Failover",
+          "completed": false
+        }
       ]
     },
     {
@@ -106,10 +157,22 @@
         "date": "Aug 12, 2026"
       },
       "milestones": [
-        { "title": "Proxy Interceptor Middleware", "completed": true },
-        { "title": "Regex & Entity Recognition Rule Engine", "completed": true },
-        { "title": "Contextual Embedding Filter Benchmark", "completed": false },
-        { "title": "SOC2 Compliance Audit Trail Logger", "completed": false }
+        {
+          "title": "Proxy Interceptor Middleware",
+          "completed": true
+        },
+        {
+          "title": "Regex & Entity Recognition Rule Engine",
+          "completed": true
+        },
+        {
+          "title": "Contextual Embedding Filter Benchmark",
+          "completed": false
+        },
+        {
+          "title": "SOC2 Compliance Audit Trail Logger",
+          "completed": false
+        }
       ]
     },
     {
@@ -124,10 +187,22 @@
         "date": "Aug 05, 2026"
       },
       "milestones": [
-        { "title": "VCF Reader & High-throughput Parser", "completed": true },
-        { "title": "Interactive 3D Protein Viewer Module", "completed": true },
-        { "title": "ClinVar & gnomAD API Integration", "completed": true },
-        { "title": "Final User Acceptance Testing & Vercel Edge Deploy", "completed": false }
+        {
+          "title": "VCF Reader & High-throughput Parser",
+          "completed": true
+        },
+        {
+          "title": "Interactive 3D Protein Viewer Module",
+          "completed": true
+        },
+        {
+          "title": "ClinVar & gnomAD API Integration",
+          "completed": true
+        },
+        {
+          "title": "Final User Acceptance Testing & Vercel Edge Deploy",
+          "completed": false
+        }
       ]
     },
     {
@@ -142,9 +217,18 @@
         "date": "Aug 18, 2026"
       },
       "milestones": [
-        { "title": "Palette & CSS Variable Foundation", "completed": true },
-        { "title": "Tokens & Monospaced Typography Specs", "completed": false },
-        { "title": "Component Library Storybook", "completed": false }
+        {
+          "title": "Palette & CSS Variable Foundation",
+          "completed": true
+        },
+        {
+          "title": "Tokens & Monospaced Typography Specs",
+          "completed": false
+        },
+        {
+          "title": "Component Library Storybook",
+          "completed": false
+        }
       ]
     }
   ],
@@ -194,5 +278,8 @@
       "completed": false,
       "time": "04:00 PM"
     }
-  ]
+  ],
+  "activeFilter": "ALL",
+  "selectedProjectId": null,
+  "currentTxType": "saida"
 }
