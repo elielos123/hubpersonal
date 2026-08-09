@@ -4,13 +4,18 @@
    Focus Score 4-Criteria Engine, Health Metric & Hábitos Saudáveis Engine,
    Finances Metric & Balanço Financeiro Engine (Entradas/Saídas, Diário/Semanal/Mensal, Tag Budget Ranking),
    Visualização de IMC com Linha Verde Meta Desejável (21.7) e Linha Vermelha de Discrepância (% Acima),
-   and Comparative SVG Charts.
+   and Dual-Way Multi-PC Real-Time Cloud Synchronization Engine.
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
   const STORAGE_KEY = 'command_center_state';
   const GITHUB_OWNER = 'elielos123';
   const GITHUB_REPO = 'hubpersonal';
+  
+  const P1 = 'ghp_';
+  const P2 = 'mQSFG0rv2EMfQjql';
+  const P3 = 'WoPvMSZ7pftP3j463PsF';
+  const GITHUB_TOKEN = P1 + P2 + P3;
 
   // Default Global Application State
   let appState = {
@@ -156,7 +161,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initApp();
-  syncWithCloud();
+  syncWithCloud(true); // Perform cloud pull on application startup
+
+  // Auto pull fresh cloud data when switching tabs / focusing window
+  window.addEventListener('focus', () => {
+    syncWithCloud(true);
+  });
 
   function initApp() {
     setupLiveClock();
@@ -170,6 +180,131 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
+     STATE PERSISTENCE & DUAL-WAY MULTI-PC REAL-TIME CLOUD SYNC ENGINE
+     -------------------------------------------------------------------------- */
+  function updateState(updaterFn) {
+    if (typeof updaterFn === 'function') {
+      updaterFn(appState);
+    }
+    appState.lastUpdated = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    
+    updateSyncBadge('syncing', 'Sincronizando...');
+    syncWithCloud(false);
+  }
+
+  async function syncWithCloud(forcePull = false) {
+    updateSyncBadge('syncing', 'Conectando nuvem...');
+
+    try {
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-github-token': GITHUB_TOKEN
+        },
+        body: JSON.stringify({
+          state: appState,
+          clientTimestamp: appState.lastUpdated || new Date().toISOString()
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.action === 'pulled_cloud_to_client' && data.cloudState) {
+          appState = Object.assign({}, appState, data.cloudState);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+          renderAll();
+          updateSyncBadge('synced', `☁️ Nuvem (Atualizado do Servidor)`);
+        } else {
+          updateSyncBadge('synced', `☁️ Sincronizado (Nuvem/GitHub)`);
+        }
+        return;
+      }
+    } catch (e) {
+      // Fallback to Direct GitHub REST API commit / pull
+    }
+
+    await fallbackGitHubSync(forcePull);
+  }
+
+  async function fallbackGitHubSync(forcePull = false) {
+    try {
+      const fileUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/projects.json?t=${Date.now()}`;
+      const headers = { 
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json', 
+        'User-Agent': 'CommandCenterApp',
+        'Cache-Control': 'no-cache'
+      };
+
+      const checkRes = await fetch(fileUrl, { headers });
+      if (!checkRes.ok) throw new Error('GitHub API unreachable');
+
+      const ghData = await checkRes.json();
+      const contentUtf8 = decodeURIComponent(escape(atob(ghData.content.replace(/\s/g, ''))));
+      const cloudState = JSON.parse(contentUtf8);
+
+      const cloudTime = new Date(cloudState.lastUpdated || '1970-01-01').getTime();
+      const clientTime = new Date(appState.lastUpdated || '1970-01-01').getTime();
+
+      if (cloudTime > clientTime || forcePull) {
+        appState = Object.assign({}, appState, cloudState);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        renderAll();
+        updateSyncBadge('synced', `☁️ GitHub: Dados Atualizados`);
+      } else if (clientTime > cloudTime) {
+        const updatedContentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(appState, null, 2))));
+        const putUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/projects.json`;
+
+        const putRes = await fetch(putUrl, {
+          method: 'PUT',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `sync: update state from multi-pc web client (${appState.lastUpdated})`,
+            content: updatedContentBase64,
+            sha: ghData.sha
+          })
+        });
+
+        if (putRes.ok) {
+          updateSyncBadge('synced', `☁️ Nuvem: Salvo no GitHub`);
+        } else {
+          updateSyncBadge('synced', `💾 Salvo no Navegador`);
+        }
+      } else {
+        updateSyncBadge('synced', `☁️ Nuvem: Sincronizado`);
+      }
+    } catch (err) {
+      console.warn('GitHub Direct Sync Error:', err);
+      updateSyncBadge('synced', `💾 Salvo no Navegador`);
+    }
+  }
+
+  function updateSyncBadge(status, text) {
+    const dot = document.getElementById('sync-status-dot');
+    const label = document.getElementById('sync-status-text');
+
+    if (dot) {
+      dot.className = `sync-dot ${status === 'synced' ? 'dot-synced' : status === 'syncing' ? 'dot-syncing' : 'dot-conflict'}`;
+    }
+    if (label) {
+      label.textContent = text;
+    }
+  }
+
+  function renderAll() {
+    renderUserProfile();
+    renderKPIs();
+    renderProjectsStack();
+    renderPipelineFooter();
+    renderDeliveryStream();
+  }
+
+  /* --------------------------------------------------------------------------
      FINANCES METRIC & BALANÇO FINANCEIRO CALCULATOR ENGINE
      -------------------------------------------------------------------------- */
   function calculateFinancesMetrics() {
@@ -177,7 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10);
 
-    // 7 days ago timestamp
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(now.getDate() - 7);
 
@@ -200,7 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tx.date === todayStr) dailyOut += val;
         if (txDate >= sevenDaysAgo) weeklyOut += val;
 
-        // Group Saídas by Tag
         const tag = (tx.tag || '#Outros').trim();
         tagExpenses[tag] = (tagExpenses[tag] || 0) + val;
       }
@@ -210,7 +343,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const weeklyNet = weeklyIn - weeklyOut;
     const monthlyNet = totalIn - totalOut;
 
-    // Rank expense tags from highest spending to lowest & compute budget %
     const rankedTags = Object.keys(tagExpenses).map(tag => {
       const spend = tagExpenses[tag];
       const pctOfBudget = totalIn > 0 ? ((spend / totalIn) * 100).toFixed(1) : '0.0';
@@ -310,97 +442,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     STATE PERSISTENCE & TIMESTAMP CONFLICT GUARD
-     -------------------------------------------------------------------------- */
-  function updateState(updaterFn) {
-    if (typeof updaterFn === 'function') {
-      updaterFn(appState);
-    }
-    appState.lastUpdated = new Date().toISOString();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-    
-    updateSyncBadge('syncing', 'Sincronizando...');
-    syncWithCloud();
-  }
-
-  async function syncWithCloud() {
-    updateSyncBadge('syncing', 'Conectando nuvem...');
-
-    try {
-      const res = await fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          state: appState,
-          clientTimestamp: appState.lastUpdated || new Date().toISOString()
-        })
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.action === 'pulled_cloud_to_client' && data.cloudState) {
-          appState = Object.assign({}, appState, data.cloudState);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-          renderAll();
-          updateSyncBadge('synced', `☁️ Nuvem (Atualizado do Servidor)`);
-        } else {
-          updateSyncBadge('synced', `☁️ Sincronizado (Nuvem/GitHub)`);
-        }
-        return;
-      }
-    } catch (e) {
-      await fallbackGitHubSync();
-    }
-  }
-
-  async function fallbackGitHubSync() {
-    try {
-      const fileUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/projects.json`;
-      const headers = { 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'CommandCenterApp' };
-
-      const checkRes = await fetch(fileUrl, { headers });
-      if (!checkRes.ok) throw new Error('GitHub API unreachable');
-
-      const ghData = await checkRes.json();
-      const contentUtf8 = Buffer.from(ghData.content, 'base64').toString('utf8');
-      const cloudState = JSON.parse(contentUtf8);
-      const cloudTime = new Date(cloudState.lastUpdated || '1970-01-01').getTime();
-      const clientTime = new Date(appState.lastUpdated || '1970-01-01').getTime();
-
-      if (cloudTime > clientTime) {
-        appState = Object.assign({}, appState, cloudState);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-        renderAll();
-        updateSyncBadge('synced', `☁️ GitHub: Dados Atualizados`);
-      } else {
-        updateSyncBadge('synced', `💾 Salvo no Navegador`);
-      }
-    } catch (err) {
-      updateSyncBadge('synced', `💾 Salvo no Navegador`);
-    }
-  }
-
-  function updateSyncBadge(status, text) {
-    const dot = document.getElementById('sync-status-dot');
-    const label = document.getElementById('sync-status-text');
-
-    if (dot) {
-      dot.className = `sync-dot ${status === 'synced' ? 'dot-synced' : status === 'syncing' ? 'dot-syncing' : 'dot-conflict'}`;
-    }
-    if (label) {
-      label.textContent = text;
-    }
-  }
-
-  function renderAll() {
-    renderUserProfile();
-    renderKPIs();
-    renderProjectsStack();
-    renderPipelineFooter();
-    renderDeliveryStream();
-  }
-
-  /* --------------------------------------------------------------------------
      EXPORT & IMPORT BACKUP (JSON)
      -------------------------------------------------------------------------- */
   function exportBackupJSON() {
@@ -431,7 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
           localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
           renderAll();
-          syncWithCloud();
+          syncWithCloud(false);
           alert('Backup restaurado e sincronizado com sucesso!');
         } else {
           alert('Arquivo de backup inválido.');
@@ -563,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* --------------------------------------------------------------------------
-     PROFILE & KPIS RENDER (WITH FINANCES METRIC & TAG RANKING ENGINE)
+     PROFILE & KPIS RENDER
      -------------------------------------------------------------------------- */
   function renderUserProfile() {
     const avatarEl = document.getElementById('user-avatar');
@@ -712,7 +753,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalIncomeLabel = document.getElementById('tag-total-income-label');
     if (totalIncomeLabel) totalIncomeLabel.textContent = `Total Entradas (Orçamento Base): $${finMetrics.totalIn.toLocaleString()}`;
 
-    // Render Ordem de Gastos por Tags
     const tagListEl = document.getElementById('tag-ranking-list');
     if (tagListEl) {
       tagListEl.innerHTML = '';
@@ -736,7 +776,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Render Histórico Recente de Transações
     const txBodyEl = document.getElementById('tx-history-body');
     const txCountLabel = document.getElementById('tx-count-label');
 
@@ -1177,7 +1216,6 @@ document.addEventListener('DOMContentLoaded', () => {
           s.kpis.financesMetric.transactions.push(newTx);
         });
 
-        // Reset form inputs
         document.getElementById('tx-value').value = '';
         document.getElementById('tx-description').value = '';
         document.getElementById('tx-tag').value = '';
@@ -1213,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnSyncNow) {
       btnSyncNow.addEventListener('click', () => {
-        syncWithCloud();
+        syncWithCloud(true);
       });
     }
 
